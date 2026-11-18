@@ -4,9 +4,19 @@ pageClass: platform-research
 ---
 
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue';
+
 // Diagrams are shared with the Chinese page and resolved via a relative glob.
 const images = import.meta.glob('../../../manual/research/images/*.svg', { eager: true, query: '?url', import: 'default' });
 const diagramUrl = (id) => images[`../../../manual/research/images/${id}.svg`];
+
+// Lightbox: enlarge diagrams in place on this page instead of opening a new tab.
+const lightbox = ref('');
+const openLightbox = (url) => { lightbox.value = url; };
+const closeLightbox = () => { lightbox.value = ''; };
+const onKeydown = (e) => { if (e.key === 'Escape') closeLightbox(); };
+onMounted(() => window.addEventListener('keydown', onKeydown));
+onUnmounted(() => window.removeEventListener('keydown', onKeydown));
 
 const diagrams = [
   { id: 'lubanagent-current', name: 'LuBanAgent today', tagline: 'Governance gates unique in this set; portal and per-user assignment missing' },
@@ -37,6 +47,59 @@ const diagrams = [
   { id: 'e2b-opensandbox', name: 'E2B / OpenSandbox', tagline: 'Sandbox-as-a-service on microVMs' },
   { id: 'k8s-session-sandbox', name: 'K8s session sandbox', tagline: 'Upper bound with Pod-level hard isolation' },
   { id: 'bwrap-cubesandbox', name: 'Bwrap / CubeSandbox', tagline: 'Lightweight process-level sandbox' },
+];
+
+// Matrix column order: LuBan first, then the panorama order.
+const projects = [
+  { id: 'lubanagent-current', name: 'LuBan today' },
+  { id: 'lubanagent-transformed', name: 'LuBan transformed' },
+  { id: 'open-webui', name: 'Open WebUI' },
+  { id: 'dify', name: 'Dify' },
+  { id: 'coze-studio', name: 'Coze' },
+  { id: 'librechat', name: 'LibreChat' },
+  { id: 'fastgpt', name: 'FastGPT' },
+  { id: 'codex-app-server', name: 'Codex' },
+  { id: 'dsh', name: 'DSH' },
+  { id: 'openhands', name: 'OpenHands' },
+  { id: 'pi', name: 'pi' },
+  { id: 'openai-agents-sdk', name: 'OA SDK' },
+  { id: 'agentscope', name: 'AgentScope' },
+  { id: 'mastra', name: 'Mastra' },
+  { id: 'deer-flow', name: 'deer-flow' },
+  { id: 'agent-teams', name: 'AgentTeams' },
+  { id: 'multiuserclaw', name: 'MultiUserClaw' },
+  { id: 'yc-qm', name: 'YC-QM' },
+  { id: 'multica', name: 'Multica' },
+  { id: 'hermes', name: 'Hermes' },
+  { id: 'workbuddy', name: 'WorkBuddy' },
+  { id: 'qwenpaw', name: 'QwenPaw' },
+  { id: 'litellm', name: 'LiteLLM' },
+  { id: 'weknora', name: 'Weknora' },
+  { id: 'ragflow', name: 'RAGFlow' },
+  { id: 'e2b-opensandbox', name: 'E2B/OSB' },
+  { id: 'k8s-session-sandbox', name: 'K8s' },
+  { id: 'bwrap-cubesandbox', name: 'Bwrap' },
+];
+const sym = { full: '●', part: '◐', none: '○' };
+
+// Each status array is aligned with `projects`; coarse verdicts, see the detail table.
+const requirements = [
+  { name: 'Web chat portal', s: ['◐','●','●','●','●','●','●','○','○','◐','○','○','◐','○','◐','◐','●','◐','◐','◐','◐','●','○','◐','◐','○','○','○'] },
+  { name: 'Registration / accounts', s: ['◐','●','●','●','●','●','●','○','○','◐','○','○','○','○','○','◐','●','◐','◐','◐','◐','●','○','◐','●','○','○','○'] },
+  { name: 'Per-user session isolation', s: ['◐','●','●','●','●','●','●','●','●','●','○','◐','●','◐','◐','●','●','◐','●','○','●','◐','○','◐','◐','●','●','●'] },
+  { name: 'Session history persistence', s: ['◐','●','●','●','●','●','●','●','●','●','◐','●','●','●','◐','●','●','◐','●','●','●','●','○','○','◐','◐','○','○'] },
+  { name: 'Knowledge bases with grants', s: ['◐','●','●','●','●','◐','●','○','○','◐','○','○','◐','◐','○','◐','◐','◐','◐','◐','◐','◐','○','●','●','○','○','○'] },
+  { name: 'Skills with visibility scopes', s: ['◐','●','●','◐','●','◐','◐','◐','◐','◐','◐','◐','◐','◐','○','◐','◐','◐','◐','●','◐','●','○','○','○','○','○','○'] },
+  { name: 'MCP central config', s: ['◐','●','●','◐','◐','●','◐','●','●','●','◐','◐','●','●','○','◐','◐','◐','●','◐','◐','◐','○','○','○','○','○','○'] },
+  { name: 'Tool sandboxing', s: ['◐','●','◐','●','●','◐','◐','●','●','●','◐','◐','●','◐','◐','●','◐','◐','●','○','◐','◐','○','○','○','●','●','●'] },
+  { name: 'Per-user/session containers', s: ['○','●','◐','◐','◐','○','○','●','◐','●','○','○','◐','○','◐','●','●','◐','●','○','○','○','○','○','○','●','●','◐'] },
+  { name: 'Quotas and model management', s: ['◐','●','◐','●','●','◐','◐','○','○','◐','○','○','○','○','○','◐','◐','◐','◐','◐','◐','◐','●','○','◐','◐','○','○'] },
+  { name: 'Cost attribution and audit', s: ['●','●','◐','◐','◐','◐','◐','◐','○','◐','◐','●','◐','◐','◐','◐','◐','◐','◐','◐','◐','◐','●','○','○','◐','◐','○'] },
+  { name: 'Human approval', s: ['●','●','○','◐','○','○','○','●','○','◐','○','●','○','○','◐','◐','○','○','○','○','○','○','○','○','○','○','○','○'] },
+  { name: 'File upload / download', s: ['◐','●','●','●','●','●','●','◐','◐','●','◐','◐','◐','◐','◐','◐','●','◐','◐','◐','●','●','○','●','●','●','○','○'] },
+  { name: 'Multi-agent collaboration', s: ['●','●','○','●','●','○','◐','◐','◐','◐','◐','●','●','●','●','●','◐','◐','●','◐','◐','◐','○','○','○','○','○','○'] },
+  { name: 'Org structure / multi-tenancy', s: ['○','○','●','●','●','◐','●','○','○','◐','○','○','○','○','○','◐','●','●','◐','○','○','◐','●','◐','◐','◐','◐','○'] },
+  { name: 'Desktop / local clients', s: ['○','○','○','○','○','○','○','◐','○','◐','○','○','○','○','○','○','○','○','○','○','●','●','○','○','○','○','○','○'] },
 ];
 </script>
 
@@ -75,6 +138,60 @@ const diagrams = [
   border: 1px solid var(--vp-c-divider);
   border-radius: 8px;
 }
+/* Big matrix: columns = projects, rows = requirements, last row embeds diagrams */
+.platform-research .matrix th,
+.platform-research .matrix td {
+  min-width: 60px;
+  padding: 6px 8px;
+  text-align: center;
+  font-size: 12px;
+}
+.platform-research .matrix th:first-child,
+.platform-research .matrix td:first-child {
+  min-width: 150px;
+  width: 160px;
+  text-align: left;
+}
+.platform-research .matrix td.st-full {
+  color: #16a34a;
+  font-weight: 600;
+}
+.platform-research .matrix td.st-part {
+  color: #d97706;
+  font-weight: 600;
+}
+.platform-research .matrix td.st-none {
+  color: var(--vp-c-text-3);
+}
+.platform-research .matrix td img {
+  width: 120px;
+  height: auto;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 4px;
+}
+/* In-page enlargement: lightbox overlay, close on any click or Escape */
+.platform-research img.zoomable {
+  cursor: zoom-in;
+}
+.platform-research .lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  cursor: zoom-out;
+}
+.platform-research .lightbox img {
+  max-width: 96vw;
+  max-height: 92vh;
+  width: auto;
+  height: auto;
+  background: #fff;
+  border-radius: 8px;
+}
 </style>
 
 # Platform benchmark research
@@ -85,9 +202,29 @@ Legend: **● native support　◐ partial / needs a fork　○ missing　★ ad
 
 The full research process, gap analysis and transformation plan live in the repository: `docs/design-docs/LuBanAgent-platform-research-and-transformation.md`.
 
-## Requirements × projects comparison {#comparison-table}
+## Requirements × 28 projects matrix {#comparison-table}
 
-The table is wide and **scrolls horizontally**; the leftmost "requirement" column is frozen so it stays visible while you scroll.
+The big table: **each column is a project** (LuBan today / transformed first for easy comparison), each row is a requirement, and the **last row embeds every project's isomorphic architecture diagram** (click to enlarge). It is wide and **scrolls horizontally** with the leftmost requirement column frozen. Cells are coarse verdicts: **● native　◐ partial / needs a fork　○ missing**; per-item evidence, descriptions and technical principles are in the [detail table](#detail-table).
+
+<div class="matrix-wrap">
+<table class="matrix">
+<thead>
+<tr><th>Requirement</th><th v-for="p in projects" :key="p.id">{{ p.name }}</th></tr>
+</thead>
+<tbody>
+<tr v-for="r in requirements" :key="r.name">
+<th>{{ r.name }}</th>
+<td v-for="(p, i) in projects" :key="p.id" :class="'st-' + r.s[i]">{{ sym[r.s[i]] }}</td>
+</tr>
+<tr class="matrix-diagrams">
+<th>Architecture diagram</th>
+<td v-for="p in projects" :key="p.id"><img class="zoomable" :src="diagramUrl(p.id)" :alt="p.name + ' architecture diagram'" loading="lazy" @click="openLightbox(diagramUrl(p.id))" /></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+### Support details and technical principles {#detail-table}
 
 | Requirement | Description | Open-source support | Technical principle |
 | --- | --- | --- | --- |
@@ -145,5 +282,9 @@ All diagrams share one six-layer structure and one status legend. Place any diag
 <section v-for="d in diagrams" :key="d.id" class="diagram-card">
 <h3 :id="d.id">{{ d.name }}</h3>
 <p>{{ d.tagline }}</p>
-<a :href="diagramUrl(d.id)" target="_blank" rel="noopener"><img :src="diagramUrl(d.id)" :alt="`${d.name} architecture diagram`" loading="lazy" /></a>
+<img class="zoomable" :src="diagramUrl(d.id)" :alt="`${d.name} architecture diagram`" loading="lazy" @click="openLightbox(diagramUrl(d.id))" />
 </section>
+
+<div v-if="lightbox" class="lightbox" @click="closeLightbox">
+<img :src="lightbox" alt="Enlarged architecture diagram" />
+</div>

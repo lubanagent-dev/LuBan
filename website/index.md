@@ -85,4 +85,5 @@ LubanAgent 直接使用 LangChain / LangGraph 的能力，不重新发明模型�
 | 接模型、写工具、加入自己的业务 | [开发指南](/tutorial/) |
 | 查配置字段、API 或功能边界 | [使用手册](/manual/) |
 | 理解源码结构和扩展位置 | [项目架构](/manual/architecture) |
+| 看 LuBan 与同类开源平台的差距 | [平台对标调研](/manual/research/platform-comparison) |
 | 准备部署、运维和升级 | [部署清单](/manual/deploy) · [升级指引](/manual/customization/upgrade) |

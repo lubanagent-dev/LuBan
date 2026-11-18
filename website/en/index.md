@@ -85,4 +85,5 @@ We maintain the engineering project around those dependencies: agent definitions
 | Connect models and write business tools | [Development guide](/en/tutorial/) |
 | Look up configuration, APIs or feature boundaries | [User manual](/en/manual/) |
 | Understand source layout and extension points | [Architecture](/en/manual/architecture) |
+| See how LuBan compares with similar open-source platforms | [Platform benchmark research](/en/manual/research/platform-comparison) |
 | Deploy, operate and follow upgrades | [Deployment](/en/manual/deploy) · [Upgrade guide](/en/manual/customization/upgrade) |

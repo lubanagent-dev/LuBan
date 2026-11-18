@@ -4,8 +4,18 @@ pageClass: platform-research
 ---
 
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue';
+
 const images = import.meta.glob('./images/*.svg', { eager: true, query: '?url', import: 'default' });
 const diagramUrl = (id) => images[`./images/${id}.svg`];
+
+// 灯箱：点击缩略图在当前页放大，不跳转新页面。
+const lightbox = ref('');
+const openLightbox = (url) => { lightbox.value = url; };
+const closeLightbox = () => { lightbox.value = ''; };
+const onKeydown = (e) => { if (e.key === 'Escape') closeLightbox(); };
+onMounted(() => window.addEventListener('keydown', onKeydown));
+onUnmounted(() => window.removeEventListener('keydown', onKeydown));
 
 // 图集与 docs/design-docs 调研报告 §1.5 保持同源；生成脚本可复现。
 const diagrams = [
@@ -37,6 +47,59 @@ const diagrams = [
   { id: 'e2b-opensandbox', name: 'E2B / OpenSandbox', tagline: 'microVM 沙箱即服务' },
   { id: 'k8s-session-sandbox', name: 'K8s 会话沙箱', tagline: 'Pod 级硬隔离上限方案' },
   { id: 'bwrap-cubesandbox', name: 'Bwrap / CubeSandbox', tagline: '进程级轻沙箱' },
+];
+
+// 大总表的列顺序：LuBan 现状/改造后放最前，其余按全景表顺序。
+const projects = [
+  { id: 'lubanagent-current', name: 'LuBan 现状' },
+  { id: 'lubanagent-transformed', name: 'LuBan 改造后' },
+  { id: 'open-webui', name: 'Open WebUI' },
+  { id: 'dify', name: 'Dify' },
+  { id: 'coze-studio', name: 'Coze' },
+  { id: 'librechat', name: 'LibreChat' },
+  { id: 'fastgpt', name: 'FastGPT' },
+  { id: 'codex-app-server', name: 'Codex' },
+  { id: 'dsh', name: 'DSH' },
+  { id: 'openhands', name: 'OpenHands' },
+  { id: 'pi', name: 'pi' },
+  { id: 'openai-agents-sdk', name: 'OA SDK' },
+  { id: 'agentscope', name: 'AgentScope' },
+  { id: 'mastra', name: 'Mastra' },
+  { id: 'deer-flow', name: 'deer-flow' },
+  { id: 'agent-teams', name: 'AgentTeams' },
+  { id: 'multiuserclaw', name: 'MultiUserClaw' },
+  { id: 'yc-qm', name: 'YC-QM' },
+  { id: 'multica', name: 'Multica' },
+  { id: 'hermes', name: 'Hermes' },
+  { id: 'workbuddy', name: 'WorkBuddy' },
+  { id: 'qwenpaw', name: 'QwenPaw' },
+  { id: 'litellm', name: 'LiteLLM' },
+  { id: 'weknora', name: 'Weknora' },
+  { id: 'ragflow', name: 'RAGFlow' },
+  { id: 'e2b-opensandbox', name: 'E2B/OSB' },
+  { id: 'k8s-session-sandbox', name: 'K8s 沙箱' },
+  { id: 'bwrap-cubesandbox', name: 'Bwrap' },
+];
+const sym = { full: '●', part: '◐', none: '○' };
+
+// 每行状态数组与 projects 顺序一一对应；粗粒度结论，逐项依据见下方明细表。
+const requirements = [
+  { name: 'Web 用户端聊天门户', s: ['◐','●','●','●','●','●','●','○','○','◐','○','○','◐','○','◐','◐','●','◐','◐','◐','◐','●','○','◐','◐','○','○','○'] },
+  { name: '注册/登录/账号体系', s: ['◐','●','●','●','●','●','●','○','○','◐','○','○','○','○','○','◐','●','◐','◐','◐','◐','●','○','◐','●','○','○','○'] },
+  { name: '多用户会话隔离', s: ['◐','●','●','●','●','●','●','●','●','●','○','◐','●','◐','◐','●','●','◐','●','○','●','◐','○','◐','◐','●','●','●'] },
+  { name: '会话历史持久化', s: ['◐','●','●','●','●','●','●','●','●','●','◐','●','●','●','◐','●','●','◐','●','●','●','●','○','○','◐','◐','○','○'] },
+  { name: '知识库配置+按权限分配', s: ['◐','●','●','●','●','◐','●','○','○','◐','○','○','◐','◐','○','◐','◐','◐','◐','◐','◐','◐','○','●','●','○','○','○'] },
+  { name: 'Skill 统一配置+可见范围', s: ['◐','●','●','◐','●','◐','◐','◐','◐','◐','◐','◐','◐','◐','○','◐','◐','◐','◐','●','◐','●','○','○','○','○','○','○'] },
+  { name: 'MCP 统一配置+动态注册', s: ['◐','●','●','◐','◐','●','◐','●','●','●','◐','◐','●','●','○','◐','◐','◐','●','◐','◐','◐','○','○','○','○','○','○'] },
+  { name: '工具执行沙箱隔离', s: ['◐','●','◐','●','●','◐','◐','●','●','●','◐','◐','●','◐','◐','●','◐','◐','●','○','◐','◐','○','○','○','●','●','●'] },
+  { name: '每用户/每会话容器', s: ['○','●','◐','◐','◐','○','○','●','◐','●','○','○','◐','○','◐','●','●','◐','●','○','○','○','○','○','○','●','●','◐'] },
+  { name: '用量配额与模型管理', s: ['◐','●','◐','●','●','◐','◐','○','○','◐','○','○','○','○','○','◐','◐','◐','◐','◐','◐','◐','●','○','◐','◐','○','○'] },
+  { name: '费用归因与审计', s: ['●','●','◐','◐','◐','◐','◐','◐','○','◐','◐','●','◐','◐','◐','◐','◐','◐','◐','◐','◐','◐','●','○','○','◐','◐','○'] },
+  { name: '高风险操作人工审批', s: ['●','●','○','◐','○','○','○','●','○','◐','○','●','○','○','◐','◐','○','○','○','○','○','○','○','○','○','○','○','○'] },
+  { name: '文件上传/下载/输出物', s: ['◐','●','●','●','●','●','●','◐','◐','●','◐','◐','◐','◐','◐','◐','●','◐','◐','◐','●','●','○','●','●','●','○','○'] },
+  { name: '多 Agent 协作', s: ['●','●','○','●','●','○','◐','◐','◐','◐','◐','●','●','●','●','●','◐','◐','●','◐','◐','◐','○','○','○','○','○','○'] },
+  { name: '组织架构/多租户', s: ['○','○','●','●','●','◐','●','○','○','◐','○','○','○','○','○','◐','●','●','◐','○','○','◐','●','◐','◐','◐','◐','○'] },
+  { name: '桌面端/本地客户端', s: ['○','○','○','○','○','○','○','◐','○','◐','○','○','○','○','○','○','○','○','○','○','●','●','○','○','○','○','○','○'] },
 ];
 </script>
 
@@ -75,6 +138,60 @@ const diagrams = [
   border: 1px solid var(--vp-c-divider);
   border-radius: 8px;
 }
+/* 大总表：列=项目，行=需求维度，末行内嵌架构图缩略图 */
+.platform-research .matrix th,
+.platform-research .matrix td {
+  min-width: 60px;
+  padding: 6px 8px;
+  text-align: center;
+  font-size: 12px;
+}
+.platform-research .matrix th:first-child,
+.platform-research .matrix td:first-child {
+  min-width: 150px;
+  width: 160px;
+  text-align: left;
+}
+.platform-research .matrix td.st-full {
+  color: #16a34a;
+  font-weight: 600;
+}
+.platform-research .matrix td.st-part {
+  color: #d97706;
+  font-weight: 600;
+}
+.platform-research .matrix td.st-none {
+  color: var(--vp-c-text-3);
+}
+.platform-research .matrix td img {
+  width: 120px;
+  height: auto;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 4px;
+}
+/* 当前页放大：灯箱遮罩 + 大图，点击任意处或 Esc 关闭 */
+.platform-research img.zoomable {
+  cursor: zoom-in;
+}
+.platform-research .lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  cursor: zoom-out;
+}
+.platform-research .lightbox img {
+  max-width: 96vw;
+  max-height: 92vh;
+  width: auto;
+  height: auto;
+  background: #fff;
+  border-radius: 8px;
+}
 </style>
 
 # 平台对标调研
@@ -85,9 +202,29 @@ const diagrams = [
 
 完整调研过程、差距分析与改造方案见仓库文档：`docs/design-docs/LuBanAgent-platform-research-and-transformation.md`。
 
-## 需求维度 × 开源项目对比表 {#comparison-table}
+## 需求维度 × 28 个项目总表 {#comparison-table}
 
-表格较宽，可以**横向滑动**查看；最左侧"需求维度"列已固定，滑动时始终可见。
+大表：**每一列是一个项目**（LuBan 现状/改造后放最前，便于对照），每行一个需求维度，**最后一行是各项目的同构架构图**（点击放大）。表格很宽，可**横向滑动**，最左"需求维度"列固定。单元格为粗粒度状态：**● 原生支持　◐ 需二开/部分　○ 缺失**；逐项依据、需求说明与技术原理见下方[明细表](#detail-table)。
+
+<div class="matrix-wrap">
+<table class="matrix">
+<thead>
+<tr><th>需求维度</th><th v-for="p in projects" :key="p.id">{{ p.name }}</th></tr>
+</thead>
+<tbody>
+<tr v-for="r in requirements" :key="r.name">
+<th>{{ r.name }}</th>
+<td v-for="(p, i) in projects" :key="p.id" :class="'st-' + r.s[i]">{{ sym[r.s[i]] }}</td>
+</tr>
+<tr class="matrix-diagrams">
+<th>同构架构图</th>
+<td v-for="p in projects" :key="p.id"><img class="zoomable" :src="diagramUrl(p.id)" :alt="p.name + ' 架构图'" loading="lazy" @click="openLightbox(diagramUrl(p.id))" /></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+### 支持明细与技术原理 {#detail-table}
 
 | 需求维度 | 需求说明 | 开源项目支持情况 | 技术原理 |
 | --- | --- | --- | --- |
@@ -145,5 +282,9 @@ const diagrams = [
 <section v-for="d in diagrams" :key="d.id" class="diagram-card">
 <h3 :id="d.id">{{ d.name }}</h3>
 <p>{{ d.tagline }}</p>
-<a :href="diagramUrl(d.id)" target="_blank" rel="noopener"><img :src="diagramUrl(d.id)" :alt="`${d.name} 同构架构图`" loading="lazy" /></a>
+<img class="zoomable" :src="diagramUrl(d.id)" :alt="`${d.name} 同构架构图`" loading="lazy" @click="openLightbox(diagramUrl(d.id))" />
 </section>
+
+<div v-if="lightbox" class="lightbox" @click="closeLightbox">
+<img :src="lightbox" alt="架构图放大视图" />
+</div>
