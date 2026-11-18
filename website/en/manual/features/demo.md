@@ -1,0 +1,9 @@
+# Built-in Customer-Service Example
+
+> This page covers what the repo's complete customer-service example demonstrates, how to regression-test it, and how to reuse the department-project Q&A template (dept-project).
+
+> Beginner path: to run this example, see [local run](/en/tutorial/01-setup-and-first-run).
+
+A fully runnable customer-service agent: built-in mock business services (orders, refunds, product catalog) and a minimal-RAG knowledge base; runs right out of the clone, with a test set for regression. Four acts: ① edit the definition (persona / brain / tools) and take effect immediately without a release; ② a high-risk Tool triggers human confirmation and a budget cutoff, with full Trace replay; ③ run evals and get a comparison report; ④ the **refund pipeline** ([graph orchestration](./graphs.md)): eligibility check → amount computation → human approval for large amounts → execution → notification, showing how deterministic flows land; complex inbound traffic is handled by **multi-agent collaboration** (triage → FAQ/refund, see [multi-agent](./multiagent.md)). For wiring real business services, see the [customization guide](../customization/overview.md).
+
+Beyond the customer-service example, the repo also ships a **department-project Q&A template** (the `dept-project` agent + `project-docs` knowledge source): it loads five core project documents into the knowledge base for pure RAG Q&A with wrong-answer gatekeeping — project questions are answered with `[n]` citations, and questions the knowledge base doesn't cover (like annual leave or cooking) are refused at the gate without calling the model (gatekeeping fields in [knowledge and memory](./knowledge-memory.md)). To build a small assistant for your own department/project, swap the document list and agent YAML in this template.

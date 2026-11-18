@@ -1,0 +1,130 @@
+"""环境化配置：env 分层加载（.env -> .env.{env} -> 真实环境变量，后者优先）。"""
+
+import os
+from functools import lru_cache
+from typing import Annotated, Literal
+
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
+
+from lubanagent.config.defaults import (
+    DEFAULT_SQLITE_URL,
+    USER_EXTENSION_PACKAGES,
+    derive_portal_secret,
+)
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", extra="ignore", populate_by_name=True
+    )
+
+    # 环境
+    env: Literal["dev", "staging", "prod"] = Field(default="dev", validation_alias="LUBAN_ENV")
+    debug: bool = False  # DEBUG
+    # 日志
+    log_level: str = "INFO"  # LOG_LEVEL
+    log_format: Literal["console", "json"] = "console"  # LOG_FORMAT
+    log_database_enabled: bool = True  # LOG_DATABASE_ENABLED
+    log_queue_capacity: int = Field(default=10000, ge=100, le=100000)  # LOG_QUEUE_CAPACITY
+    log_retention_days: int = Field(default=30, ge=1, le=3650)  # LOG_RETENTION_DAYS
+    # 数据库（async 驱动 URL）
+    database_url: str = DEFAULT_SQLITE_URL  # DATABASE_URL
+    # 观测（C 方案）：内置 langfuse/langsmith/none；用户注册的后端名也可经 env 选址（架构 §6.4）
+    observability_backend: str = "langfuse"  # OBSERVABILITY_BACKEND
+    langfuse_host: str | None = None  # LANGFUSE_HOST
+    langfuse_public_key: str | None = None  # LANGFUSE_PUBLIC_KEY
+    langfuse_secret_key: str | None = None  # LANGFUSE_SECRET_KEY
+    langsmith_api_key: str | None = None  # LANGSMITH_API_KEY
+    langsmith_project: str | None = None  # LANGSMITH_PROJECT
+    # 接入鉴权（F8）
+    auth_enabled: bool = True  # AUTH_ENABLED
+    api_key: str | None = None  # API_KEY（框架默认 AuthProvider 用）
+    auth_database_enabled: bool = False  # AUTH_DATABASE_ENABLED（可无 API_KEY，仅数据库账号）
+    auth_session_hours: int = Field(default=8, ge=1, le=168)  # AUTH_SESSION_HOURS
+    admin_bootstrap_password: str | None = Field(
+        default=None, validation_alias="LUBAN_ADMIN_PASSWORD", min_length=12, max_length=256
+    )
+    rate_limit_per_minute: int = 600  # RATE_LIMIT_PER_MINUTE
+    # 业务接入
+    biz_base_url: str | None = None  # BIZ_BASE_URL
+    # Embedding（RAG 向量化）：配了 embedding_model 走 OpenAI 兼容协议，
+    # 未配则 app 装配退回 FakeEmbedding（零密钥演示，不承诺生产检索质量）
+    embedding_model: str | None = None  # EMBEDDING_MODEL
+    embedding_base_url: str | None = None  # EMBEDDING_BASE_URL
+    embedding_api_key_env: str | None = None  # EMBEDDING_API_KEY_ENV
+    # 用户扩展扫描包（EXTENSION_PACKAGES，逗号分隔）
+    extension_packages: Annotated[list[str], NoDecode] = Field(
+        default_factory=lambda: list(USER_EXTENSION_PACKAGES)
+    )
+    # Skill 包目录（相对 cwd；上传的 Skill 包落此目录子文件夹，运行期扫描装载）
+    skills_root: str = "app/skills"  # SKILLS_ROOT
+    # 知识库上传文件落盘根目录（相对 cwd；每个知识源一个子目录，重新切块从盘上重读）
+    knowledge_files_root: str = "data/knowledge"  # KNOWLEDGE_FILES_ROOT
+    # 长期记忆容量（每 agent+user 条数上限，超出淘汰最旧；防长期运行无限增长）
+    long_term_memory_capacity: int = 1000  # LONG_TERM_MEMORY_CAPACITY
+    avatar_files_root: str = "data/avatars"  # AVATAR_FILES_ROOT
+    # 会话文件落盘根目录（相对 cwd；每个会话一个子目录 ./data/session_files/{session_id}/）
+    session_files_dir: str = "data/session_files"  # SESSION_FILES_DIR
+    # 单个会话文件大小上限（字节，默认 20MB；超限返回 413）
+    session_files_max_bytes: int = Field(default=20 * 1024 * 1024, ge=1)  # SESSION_FILES_MAX_BYTES
+    # 外部 Watchdog 控制回路（默认关）：判 RUNNING Run 是否有实质进展，
+    # 告警事件落目标 Run 的 trace；阈值仅在 enabled 时生效
+    watchdog_enabled: bool = False  # WATCHDOG_ENABLED
+    watchdog_interval_seconds: float = 60.0  # WATCHDOG_INTERVAL_SECONDS
+    watchdog_stale_after_seconds: float = 300.0  # WATCHDOG_STALE_AFTER_SECONDS
+    watchdog_max_run_seconds: float = 3600.0  # WATCHDOG_MAX_RUN_SECONDS
+    # 异步工具调用（默认关）：execution_mode="async" 的工具立即返回占位、后台执行，
+    # 注入 task_result/task_stop 伴生工具；关闭时 async 声明按 sync 路径执行（零行为变化）
+    tool_async_enabled: bool = False  # TOOL_ASYNC_ENABLED
+    # 终端用户门户（R5）：默认全关，PORTAL_ENABLED=false 时 /v1/portal/* 全部 404
+    #（保持"可关闭、退回纯基座"契约）。
+    portal_enabled: bool = False  # PORTAL_ENABLED
+    portal_registration_enabled: bool = False  # PORTAL_REGISTRATION_ENABLED
+    portal_jwt_secret: str | None = None  # PORTAL_JWT_SECRET（缺省从主密钥 api_key 派生）
+    # 动态资源装配器（R2）：默认允许未分配资源可见（向后兼容）——某资源无任何分配
+    # 记录时对所有人可见；一旦存在分配记录，仅被授权 subject 可见
+    # （完整语义见 lubanagent/runtime/assignment_filter.py 模块 docstring）
+    default_allow_unassigned: bool = True  # DEFAULT_ALLOW_UNASSIGNED
+    # 会话级容器沙箱（R10）：默认进程级沙箱；docker 后端需要宿主 Docker CLI 与镜像
+    skill_sandbox_backend: Literal["process", "docker"] = "process"  # SKILL_SANDBOX_BACKEND
+    skill_sandbox_docker_image: str = "python:3.12-slim"  # SKILL_SANDBOX_DOCKER_IMAGE
+    skill_sandbox_docker_memory: str = "512m"  # SKILL_SANDBOX_DOCKER_MEMORY
+    skill_sandbox_docker_cpus: float = 1.0  # SKILL_SANDBOX_DOCKER_CPUS
+    skill_sandbox_docker_pids_limit: int = 128  # SKILL_SANDBOX_DOCKER_PIDS_LIMIT
+    skill_sandbox_workspace_root: str | None = None  # SKILL_SANDBOX_WORKSPACE_ROOT
+
+    @field_validator("extension_packages", mode="before")
+    @classmethod
+    def _split_csv(cls, v: object) -> object:
+        # env/.env 里是逗号分隔字符串，NoDecode 关掉 JSON 解析后在此拆分
+        if isinstance(v, str):
+            return [item.strip() for item in v.split(",") if item.strip()]
+        return v
+
+    @property
+    def sync_database_url(self) -> str:
+        """Alembic 用同步驱动 URL：只映射已知方言，其他原样返回。"""
+        return self.database_url.replace("+aiosqlite", "+pysqlite", 1).replace(
+            "+asyncmy", "+pymysql", 1
+        )
+
+    @property
+    def portal_secret(self) -> str:
+        """门户令牌签名密钥：显式配置优先，否则从主密钥（api_key）派生。"""
+        return self.portal_jwt_secret or derive_portal_secret(self.api_key)
+
+    @classmethod
+    def load(cls) -> "Settings":
+        """分层入口：先读 os.environ 的 LUBAN_ENV（缺省 dev），再按 .env + .env.{env} 加载。
+
+        优先级：真实环境变量 > .env.{env} > .env。
+        """
+        env = os.environ.get("LUBAN_ENV", "dev")
+        return cls(_env_file=(".env", f".env.{env}"))
+
+
+@lru_cache
+def get_settings() -> Settings:
+    """进程级单例配置入口。"""
+    return Settings.load()

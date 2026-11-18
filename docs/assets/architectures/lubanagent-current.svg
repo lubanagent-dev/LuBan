@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1010" viewBox="0 0 1440 1010" font-family="'PingFang SC','Microsoft YaHei',sans-serif">
+<rect width="1440" height="1010" fill="#FAFAFA"/>
+<text x="720.0" y="40" text-anchor="middle" font-size="22" font-weight="700" fill="#202124">LuBanAgent（现状基准） · 架构图</text>
+<text x="720.0" y="64" text-anchor="middle" font-size="13" fill="#5F6368">治理/审批/归因强 · 用户端门户与主体隔离是短板</text>
+<text x="720.0" y="86" text-anchor="middle" font-size="11" fill="#80868B">● 原生支持　◐ 部分 / 需二开　○ 缺失　★ 本次改造新增　（六层结构与全部项目图一致，便于横向对比）</text>
+<rect x="40" y="100" width="1360" height="84" rx="12" fill="#E8F0FE" stroke="#4285F4" stroke-width="1.4"/>
+  <text x="60" y="124" font-size="13.5" font-weight="700" fill="#174EA6">① 接入层（谁在用）</text>
+<rect x="64" y="130" width="308" height="44" rx="8" fill="#FFFFFF" stroke="#4285F4" stroke-dasharray="5 3" stroke-width="1.4"/>
+  <text x="218.0" y="148" text-anchor="middle" font-size="12" font-weight="600" fill="#202124">◐ 终端用户</text>
+  <text x="218.0" y="159.0" text-anchor="middle" font-size="10.5" fill="#5F6368">/chat 示例级</text>
+  <rect x="396" y="130" width="308" height="44" rx="8" fill="#FFFFFF" stroke="#4285F4" stroke-width="1.4"/>
+  <text x="550.0" y="148" text-anchor="middle" font-size="12" font-weight="600" fill="#202124">● 管理员</text>
+  <text x="550.0" y="159.0" text-anchor="middle" font-size="10.5" fill="#5F6368">开发者工作台</text>
+  <rect x="728" y="130" width="308" height="44" rx="8" fill="#FFFFFF" stroke="#4285F4" stroke-width="1.4"/>
+  <text x="882.0" y="148" text-anchor="middle" font-size="12" font-weight="600" fill="#202124">● 业务系统</text>
+  <text x="882.0" y="159.0" text-anchor="middle" font-size="10.5" fill="#5F6368">REST/SSE 自建</text>
+  <rect x="1060" y="130" width="308" height="44" rx="8" fill="#FFFFFF" stroke="#4285F4" stroke-dasharray="5 3" stroke-width="1.4"/>
+  <text x="1214.0" y="148" text-anchor="middle" font-size="12" font-weight="600" fill="#202124">◐ 外部渠道</text>
+  <text x="1214.0" y="159.0" text-anchor="middle" font-size="10.5" fill="#5F6368">商用渠道层</text>
+<rect x="40" y="200" width="1360" height="100" rx="12" fill="#E6F4EA" stroke="#188038" stroke-width="1.4"/>
+  <text x="60" y="224" font-size="13.5" font-weight="700" fill="#0D652D">② 门户层（用户交互）</text>
+<rect x="64" y="230" width="248" height="60" rx="8" fill="#FFFFFF" stroke="#188038" stroke-dasharray="5 3" stroke-width="1.4"/>
+  <text x="188.0" y="248" text-anchor="middle" font-size="12" font-weight="600" fill="#202124">◐ 注册登录</text>
+  <text x="188.0" y="267.0" text-anchor="middle" font-size="10.5" fill="#5F6368">工作台 RBAC 账号</text>
+  <rect x="332" y="230" width="248" height="60" rx="8" fill="#F8F9FA" stroke="#9AA0A6" stroke-dasharray="5 3" stroke-width="1.4"/>
+  <text x="456.0" y="248" text-anchor="middle" font-size="12" font-weight="600" fill="#80868B">○ 会话历史</text>
+  <text x="456.0" y="267.0" text-anchor="middle" font-size="10.5" fill="#5F6368">无会话列表</text>
+  <rect x="600" y="230" width="248" height="60" rx="8" fill="#FFFFFF" stroke="#188038" stroke-width="1.4"/>
+  <text x="724.0" y="248" text-anchor="middle" font-size="12" font-weight="600" fill="#202124">● 流式聊天</text>
+  <text x="724.0" y="267.0" text-anchor="middle" font-size="10.5" fill="#5F6368">SSE·形象·MD</text>
+  <rect x="868" y="230" width="248" height="60" rx="8" fill="#FFFFFF" stroke="#188038" stroke-dasharray="5 3" stroke-width="1.4"/>
+  <text x="992.0" y="248" text-anchor="middle" font-size="12" font-weight="600" fill="#202124">◐ 文件上传下载</text>
+  <text x="992.0" y="267.0" text-anchor="middle" font-size="10.5" fill="#5F6368">知识库上传</text>
+  <rect x="1136" y="230" width="248" height="60" rx="8" fill="#FFFFFF" stroke="#188038" stroke-width="1.4"/>
+  <text x="1260.0" y="248" text-anchor="middle" font-size="12" font-weight="600" fill="#202124">● 人工审批</text>
+  <text x="1260.0" y="267.0" text-anchor="middle" font-size="10.5" fill="#5F6368">持久化·可恢复</text>
+<rect x="40" y="316" width="1360" height="84" rx="12" fill="#FEF7E0" stroke="#F9AB00" stroke-width="1.4"/>
+  <text x="60" y="340" font-size="13.5" font-weight="700" fill="#B06000">③ 平台控制层（治理入口）</text>
+<rect x="64" y="346" width="308" height="44" rx="8" fill="#FFFFFF" stroke="#F9AB00" stroke-width="1.4"/>
+  <text x="218.0" y="364" text-anchor="middle" font-size="12" font-weight="600" fill="#202124">● 鉴权 RBAC</text>
+  <text x="218.0" y="375.0" text-anchor="middle" font-size="10.5" fill="#5F6368">逐请求裁决</text>
+  <rect x="396" y="346" width="308" height="44" rx="8" fill="#F8F9FA" stroke="#9AA0A6" stroke-dasharray="5 3" stroke-width="1.4"/>
+  <text x="550.0" y="364" text-anchor="middle" font-size="12" font-weight="600" fill="#80868B">○ 多用户隔离</text>
+  <text x="550.0" y="375.0" text-anchor="middle" font-size="10.5" fill="#5F6368">未做（定位约束）</text>
+  <rect x="728" y="346" width="308" height="44" rx="8" fill="#FFFFFF" stroke="#F9AB00" stroke-dasharray="5 3" stroke-width="1.4"/>
+  <text x="882.0" y="364" text-anchor="middle" font-size="12" font-weight="600" fill="#202124">◐ 配额用量</text>
+  <text x="882.0" y="375.0" text-anchor="middle" font-size="10.5" fill="#5F6368">Run 级三道闸</text>
+  <rect x="1060" y="346" width="308" height="44" rx="8" fill="#FFFFFF" stroke="#F9AB00" stroke-dasharray="5 3" stroke-width="1.4"/>
+  <text x="1214.0" y="364" text-anchor="middle" font-size="12" font-weight="600" fill="#202124">◐ 审计日志</text>
+  <text x="1214.0" y="375.0" text-anchor="middle" font-size="10.5" fill="#5F6368">日志排查页</text>
+<rect x="40" y="416" width="1360" height="96" rx="12" fill="#F3E8FD" stroke="#A142F4" stroke-width="1.4"/>
+  <text x="60" y="440" font-size="13.5" font-weight="700" fill="#6A1FA2">④ 引擎层（Agent 核心）</text>
+<rect x="64" y="446" width="308" height="56" rx="8" fill="#FFFFFF" stroke="#A142F4" stroke-width="1.4"/>
+  <text x="218.0" y="464" text-anchor="middle" font-size="12" font-weight="600" fill="#202124">● Agent 定义</text>
+  <text x="218.0" y="481.0" text-anchor="middle" font-size="10.5" fill="#5F6368">入库版本化</text>
+  <rect x="396" y="446" width="308" height="56" rx="8" fill="#FFFFFF" stroke="#A142F4" stroke-width="1.4"/>
+  <text x="550.0" y="464" text-anchor="middle" font-size="12" font-weight="600" fill="#202124">● Runtime 编排</text>
+  <text x="550.0" y="481.0" text-anchor="middle" font-size="10.5" fill="#5F6368">LangGraph 统一</text>
+  <rect x="728" y="446" width="308" height="56" rx="8" fill="#FFFFFF" stroke="#A142F4" stroke-width="1.4"/>
+  <text x="882.0" y="464" text-anchor="middle" font-size="12" font-weight="600" fill="#202124">● 治理闸</text>
+  <text x="882.0" y="481.0" text-anchor="middle" font-size="10.5" fill="#5F6368">步数/预算/超时/取消</text>
+  <rect x="1060" y="446" width="308" height="56" rx="8" fill="#FFFFFF" stroke="#A142F4" stroke-width="1.4"/>
+  <text x="1214.0" y="464" text-anchor="middle" font-size="12" font-weight="600" fill="#202124">● 模型管理</text>
+  <text x="1214.0" y="481.0" text-anchor="middle" font-size="10.5" fill="#5F6368">四槽位工厂</text>
+<rect x="40" y="528" width="800" height="132" rx="12" fill="#E0F7FA" stroke="#00838F" stroke-width="1.4"/>
+  <text x="60" y="552" font-size="13.5" font-weight="700" fill="#006064">⑤a 共享资源层</text>
+<rect x="64" y="562" width="142" height="64" rx="8" fill="#FFFFFF" stroke="#00838F" stroke-width="1.4"/>
+  <text x="135.0" y="580" text-anchor="middle" font-size="12" font-weight="600" fill="#202124">● 知识库</text>
+  <text x="135.0" y="601.0" text-anchor="middle" font-size="10.5" fill="#5F6368">最小 RAG</text>
+  <rect x="222" y="562" width="142" height="64" rx="8" fill="#FFFFFF" stroke="#00838F" stroke-width="1.4"/>
+  <text x="293.0" y="580" text-anchor="middle" font-size="12" font-weight="600" fill="#202124">● Skill 工具集</text>
+  <text x="293.0" y="601.0" text-anchor="middle" font-size="10.5" fill="#5F6368">运行时+管理页</text>
+  <rect x="380" y="562" width="142" height="64" rx="8" fill="#FFFFFF" stroke="#00838F" stroke-width="1.4"/>
+  <text x="451.0" y="580" text-anchor="middle" font-size="12" font-weight="600" fill="#202124">● MCP</text>
+  <text x="451.0" y="601.0" text-anchor="middle" font-size="10.5" fill="#5F6368">Client/Server</text>
+  <rect x="538" y="562" width="142" height="64" rx="8" fill="#FFFFFF" stroke="#00838F" stroke-width="1.4"/>
+  <text x="609.0" y="580" text-anchor="middle" font-size="12" font-weight="600" fill="#202124">● Tool 执行</text>
+  <text x="609.0" y="601.0" text-anchor="middle" font-size="10.5" fill="#5F6368">Python 受治理</text>
+  <rect x="696" y="562" width="142" height="64" rx="8" fill="#FFFFFF" stroke="#00838F" stroke-width="1.4"/>
+  <text x="767.0" y="580" text-anchor="middle" font-size="12" font-weight="600" fill="#202124">● Prompt 管理</text>
+  <text x="767.0" y="601.0" text-anchor="middle" font-size="10.5" fill="#5F6368">一等实体化</text>
+<rect x="856" y="528" width="544" height="132" rx="12" fill="#FCE8E6" stroke="#C5221F" stroke-width="1.4"/>
+  <text x="876" y="552" font-size="13.5" font-weight="700" fill="#A50E0E">⑤b 执行隔离层</text>
+<rect x="880" y="562" width="160" height="64" rx="8" fill="#F8F9FA" stroke="#9AA0A6" stroke-dasharray="5 3" stroke-width="1.4"/>
+  <text x="960.0" y="580" text-anchor="middle" font-size="12" font-weight="600" fill="#80868B">○ 进程沙箱</text>
+  <text x="960.0" y="601.0" text-anchor="middle" font-size="10.5" fill="#5F6368">无</text>
+  <rect x="1056" y="562" width="160" height="64" rx="8" fill="#FFFFFF" stroke="#C5221F" stroke-dasharray="5 3" stroke-width="1.4"/>
+  <text x="1136.0" y="580" text-anchor="middle" font-size="12" font-weight="600" fill="#202124">◐ 容器编排</text>
+  <text x="1136.0" y="601.0" text-anchor="middle" font-size="10.5" fill="#5F6368">Docker 整体交付</text>
+  <rect x="1232" y="562" width="160" height="64" rx="8" fill="#F8F9FA" stroke="#9AA0A6" stroke-dasharray="5 3" stroke-width="1.4"/>
+  <text x="1312.0" y="580" text-anchor="middle" font-size="12" font-weight="600" fill="#80868B">○ 工作区隔离</text>
+  <text x="1312.0" y="601.0" text-anchor="middle" font-size="10.5" fill="#5F6368">未做</text>
+<rect x="40" y="676" width="1360" height="96" rx="12" fill="#F1F3F4" stroke="#5F6368" stroke-width="1.4"/>
+  <text x="60" y="700" font-size="13.5" font-weight="700" fill="#3C4043">⑥ 存储与观测层</text>
+<rect x="64" y="710" width="420" height="48" rx="8" fill="#FFFFFF" stroke="#5F6368" stroke-width="1.4"/>
+  <text x="274.0" y="728" text-anchor="middle" font-size="12" font-weight="600" fill="#202124">● 存储</text>
+  <text x="274.0" y="741.0" text-anchor="middle" font-size="10.5" fill="#5F6368">MySQL/SQLite 唯一源</text>
+  <rect x="510" y="710" width="420" height="48" rx="8" fill="#FFFFFF" stroke="#5F6368" stroke-width="1.4"/>
+  <text x="720.0" y="728" text-anchor="middle" font-size="12" font-weight="600" fill="#202124">● 观测追踪</text>
+  <text x="720.0" y="741.0" text-anchor="middle" font-size="10.5" fill="#5F6368">Langfuse 双写</text>
+  <rect x="956" y="710" width="420" height="48" rx="8" fill="#FFFFFF" stroke="#5F6368" stroke-width="1.4"/>
+  <text x="1166.0" y="728" text-anchor="middle" font-size="12" font-weight="600" fill="#202124">● 部署交付</text>
+  <text x="1166.0" y="741.0" text-anchor="middle" font-size="10.5" fill="#5F6368">Docker compose</text>
+<text x="60" y="816" font-size="12" fill="#3C4043"><tspan font-weight="700">帖子证据：</tspan>README / AGENTS.md 现状 · 作为全图集对比基准</text>
+<text x="60" y="840" font-size="12" fill="#3C4043"><tspan font-weight="700">与 LuBan 对比：</tspan>治理四件套（定义版本化/治理闸/审批/归因）全图集独有；门户/分配/配额缺</text>
+<text x="720.0" y="880" text-anchor="middle" font-size="11" fill="#9AA0A6">同构图集 · 生成于 scripts/gen-platform-comparison-diagrams.py · lubanagent-current.svg</text>
+</svg>

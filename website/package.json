@@ -1,0 +1,16 @@
+{
+  "name": "lubanagent-docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "test": "node --test scripts/locales.test.mjs",
+    "preview": "vitepress preview"
+  },
+  "devDependencies": {
+    "mermaid": "^11.12.2",
+    "vitepress": "^1.6.3",
+    "vitepress-plugin-mermaid": "^2.0.17"
+  }
+}
