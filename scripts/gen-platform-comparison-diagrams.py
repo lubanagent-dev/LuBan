@@ -2,7 +2,7 @@
 """生成帖子调研项目的同构 SVG 架构图集。
 
 所有图共用同一版式（六层结构）与同一状态标记：
-  ● 原生支持   ◐ 部分/需二开   ○ 缺失   ★ 本次改造新增（仅 LuBanAgent 改造后图使用）
+  ● 原生支持   ◐ 部分/需二开   ○ 缺失   ★ 近期新增（仅 LuBanAgent 图使用）
 差异通过"同一槽位的有/无/部分"体现，便于横向对比。
 
 用法：python3 scripts/gen-platform-comparison-diagrams.py
@@ -89,7 +89,7 @@ def render(p):
     )
     s.append(
         f'<text x="{CANVAS_W / 2}" y="86" text-anchor="middle" font-size="11" fill="#80868B">'
-        "● 原生支持　◐ 部分 / 需二开　○ 缺失　★ 本次改造新增　（六层结构与全部项目图一致，便于横向对比）</text>"
+        "● 原生支持　◐ 部分 / 需二开　○ 缺失　★ 近期新增　（六层结构与全部项目图一致，便于横向对比）</text>"
     )
 
     # L1 接入层
@@ -482,25 +482,12 @@ PROJECTS = [
         l5b=[("进程沙箱", "bubblewrap 核心", "yes"), ("容器编排", "无需容器", "part"), ("工作区隔离", "目录白名单", "yes")],
         l6=[("存储", "宿主目录", "yes"), ("观测追踪", "无", "no"), ("部署交付", "Linux 裸金属", "yes")],
     ),
-    # ============ LuBanAgent 基准对比 ============
+    # ============ LuBanAgent ============
     dict(
-        slug="lubanagent-current", name="LuBanAgent（现状基准）",
-        tagline="治理/审批/归因强 · 用户端门户与主体隔离是短板",
-        evidence="README / AGENTS.md 现状 · 作为全图集对比基准",
-        diff="治理四件套（定义版本化/治理闸/审批/归因）全图集独有；门户/分配/配额缺",
-        l1=[("终端用户", "/chat 示例级", "part"), ("管理员", "开发者工作台", "yes"), ("业务系统", "REST/SSE 自建", "yes"), ("外部渠道", "商用渠道层", "part")],
-        l2=[("注册登录", "工作台 RBAC 账号", "part"), ("会话历史", "无会话列表", "no"), ("流式聊天", "SSE·形象·MD", "yes"), ("文件上传下载", "知识库上传", "part"), ("人工审批", "持久化·可恢复", "yes")],
-        l3=[("鉴权 RBAC", "逐请求裁决", "yes"), ("多用户隔离", "未做（定位约束）", "no"), ("配额用量", "Run 级三道闸", "part"), ("审计日志", "日志排查页", "part")],
-        l4=[("Agent 定义", "入库版本化", "yes"), ("Runtime 编排", "LangGraph 统一", "yes"), ("治理闸", "步数/预算/超时/取消", "yes"), ("模型管理", "四槽位工厂", "yes")],
-        l5a=[("知识库", "最小 RAG", "yes"), ("Skill 工具集", "运行时+管理页", "yes"), ("MCP", "Client/Server", "yes"), ("Tool 执行", "Python 受治理", "yes"), ("Prompt 管理", "一等实体化", "yes")],
-        l5b=[("进程沙箱", "无", "no"), ("容器编排", "Docker 整体交付", "part"), ("工作区隔离", "未做", "no")],
-        l6=[("存储", "MySQL/SQLite 唯一源", "yes"), ("观测追踪", "Langfuse 双写", "yes"), ("部署交付", "Docker compose", "yes")],
-    ),
-    dict(
-        slug="lubanagent-transformed", name="LuBanAgent（改造后）",
-        tagline="补齐门户/分配/动态装配/主体配额 · ★ 为本次改造项",
-        evidence="方案 R1–R11 · docs/design-docs/LuBanAgent-platform-research-and-transformation.md",
-        diff="治理四件套不变，补齐门户五件套+装配级隔离+主体配额；对齐或超越帖内方案",
+        slug="lubanagent", name="LuBanAgent",
+        tagline="治理四件套 + 用户端门户 · 分配与动态装配 · 主体配额",
+        evidence="README / AGENTS.md · R1–R11 已落地 · docs/design-docs/LuBanAgent-platform-research-and-transformation.md",
+        diff="治理四件套（定义版本化/治理闸/审批/归因）+门户五件套+装配级隔离+主体配额；对齐或超越帖内方案",
         l1=[("终端用户", "门户自助使用", "star"), ("管理员", "分配与配额管理页", "star"), ("业务系统", "REST/SSE 不变", "yes"), ("外部渠道", "商用渠道层", "part")],
         l2=[("注册登录", "终端用户账号域", "star"), ("会话历史", "会话列表持久化", "star"), ("流式聊天", "SSE·形象·MD", "yes"), ("文件上传下载", "会话级上传下载", "star"), ("人工审批", "气泡内审批", "yes")],
         l3=[("鉴权 RBAC", "工作台+门户分域", "star"), ("多用户隔离", "动态装配按人过滤", "star"), ("配额用量", "主体配额闸", "star"), ("审计日志", "用户端事件审计", "star")],

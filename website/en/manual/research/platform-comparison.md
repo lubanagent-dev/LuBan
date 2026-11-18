@@ -19,8 +19,7 @@ onMounted(() => window.addEventListener('keydown', onKeydown));
 onUnmounted(() => window.removeEventListener('keydown', onKeydown));
 
 const diagrams = [
-  { id: 'lubanagent-current', name: 'LuBanAgent today', tagline: 'Governance gates unique in this set; portal and per-user assignment missing' },
-  { id: 'lubanagent-transformed', name: 'LuBanAgent transformed', tagline: 'Adds portal, per-subject assembly isolation and quotas (★ items)' },
+  { id: 'lubanagent', name: 'LuBanAgent', tagline: 'Governance gates + portal, per-subject assignment, dynamic assembly and quotas' },
   { id: 'open-webui', name: 'Open WebUI', tagline: 'Portal essentials nearly complete; governance, approvals and quotas missing' },
   { id: 'dify', name: 'Dify', tagline: 'Tenants, quotas, sandbox and knowledge bases; approvals and budget governance missing' },
   { id: 'coze-studio', name: 'Coze Studio', tagline: 'Same track as Dify; orchestration, knowledge bases and plugins complete' },
@@ -49,10 +48,9 @@ const diagrams = [
   { id: 'bwrap-cubesandbox', name: 'Bwrap / CubeSandbox', tagline: 'Lightweight process-level sandbox' },
 ];
 
-// Matrix column order: LuBan first, then the panorama order.
+// Matrix column order: LuBanAgent first, then the research order.
 const projects = [
-  { id: 'lubanagent-current', name: 'LuBan today' },
-  { id: 'lubanagent-transformed', name: 'LuBan transformed' },
+  { id: 'lubanagent', name: 'LuBanAgent' },
   { id: 'open-webui', name: 'Open WebUI' },
   { id: 'dify', name: 'Dify' },
   { id: 'coze-studio', name: 'Coze' },
@@ -84,22 +82,22 @@ const sym = { full: '●', part: '◐', none: '○' };
 
 // Each status array is aligned with `projects`; coarse verdicts, see the detail table.
 const requirements = [
-  { name: 'Web chat portal', s: ['◐','●','●','●','●','●','●','○','○','◐','○','○','◐','○','◐','◐','●','◐','◐','◐','◐','●','○','◐','◐','○','○','○'] },
-  { name: 'Registration / accounts', s: ['◐','●','●','●','●','●','●','○','○','◐','○','○','○','○','○','◐','●','◐','◐','◐','◐','●','○','◐','●','○','○','○'] },
-  { name: 'Per-user session isolation', s: ['◐','●','●','●','●','●','●','●','●','●','○','◐','●','◐','◐','●','●','◐','●','○','●','◐','○','◐','◐','●','●','●'] },
-  { name: 'Session history persistence', s: ['◐','●','●','●','●','●','●','●','●','●','◐','●','●','●','◐','●','●','◐','●','●','●','●','○','○','◐','◐','○','○'] },
-  { name: 'Knowledge bases with grants', s: ['◐','●','●','●','●','◐','●','○','○','◐','○','○','◐','◐','○','◐','◐','◐','◐','◐','◐','◐','○','●','●','○','○','○'] },
-  { name: 'Skills with visibility scopes', s: ['◐','●','●','◐','●','◐','◐','◐','◐','◐','◐','◐','◐','◐','○','◐','◐','◐','◐','●','◐','●','○','○','○','○','○','○'] },
-  { name: 'MCP central config', s: ['◐','●','●','◐','◐','●','◐','●','●','●','◐','◐','●','●','○','◐','◐','◐','●','◐','◐','◐','○','○','○','○','○','○'] },
-  { name: 'Tool sandboxing', s: ['◐','●','◐','●','●','◐','◐','●','●','●','◐','◐','●','◐','◐','●','◐','◐','●','○','◐','◐','○','○','○','●','●','●'] },
-  { name: 'Per-user/session containers', s: ['○','●','◐','◐','◐','○','○','●','◐','●','○','○','◐','○','◐','●','●','◐','●','○','○','○','○','○','○','●','●','◐'] },
-  { name: 'Quotas and model management', s: ['◐','●','◐','●','●','◐','◐','○','○','◐','○','○','○','○','○','◐','◐','◐','◐','◐','◐','◐','●','○','◐','◐','○','○'] },
-  { name: 'Cost attribution and audit', s: ['●','●','◐','◐','◐','◐','◐','◐','○','◐','◐','●','◐','◐','◐','◐','◐','◐','◐','◐','◐','◐','●','○','○','◐','◐','○'] },
-  { name: 'Human approval', s: ['●','●','○','◐','○','○','○','●','○','◐','○','●','○','○','◐','◐','○','○','○','○','○','○','○','○','○','○','○','○'] },
-  { name: 'File upload / download', s: ['◐','●','●','●','●','●','●','◐','◐','●','◐','◐','◐','◐','◐','◐','●','◐','◐','◐','●','●','○','●','●','●','○','○'] },
-  { name: 'Multi-agent collaboration', s: ['●','●','○','●','●','○','◐','◐','◐','◐','◐','●','●','●','●','●','◐','◐','●','◐','◐','◐','○','○','○','○','○','○'] },
-  { name: 'Org structure / multi-tenancy', s: ['○','○','●','●','●','◐','●','○','○','◐','○','○','○','○','○','◐','●','●','◐','○','○','◐','●','◐','◐','◐','◐','○'] },
-  { name: 'Desktop / local clients', s: ['○','○','○','○','○','○','○','◐','○','◐','○','○','○','○','○','○','○','○','○','○','●','●','○','○','○','○','○','○'] },
+  { name: 'Web chat portal', s: ['●','●','●','●','●','●','○','○','◐','○','○','◐','○','◐','◐','●','◐','◐','◐','◐','●','○','◐','◐','○','○','○'] },
+  { name: 'Registration / accounts', s: ['●','●','●','●','●','●','○','○','◐','○','○','○','○','○','◐','●','◐','◐','◐','◐','●','○','◐','●','○','○','○'] },
+  { name: 'Per-user session isolation', s: ['●','●','●','●','●','●','●','●','●','○','◐','●','◐','◐','●','●','◐','●','○','●','◐','○','◐','◐','●','●','●'] },
+  { name: 'Session history persistence', s: ['●','●','●','●','●','●','●','●','●','◐','●','●','●','◐','●','●','◐','●','●','●','●','○','○','◐','◐','○','○'] },
+  { name: 'Knowledge bases with grants', s: ['●','●','●','●','◐','●','○','○','◐','○','○','◐','◐','○','◐','◐','◐','◐','◐','◐','◐','○','●','●','○','○','○'] },
+  { name: 'Skills with visibility scopes', s: ['●','●','◐','●','◐','◐','◐','◐','◐','◐','◐','◐','◐','○','◐','◐','◐','◐','●','◐','●','○','○','○','○','○','○'] },
+  { name: 'MCP central config', s: ['●','●','◐','◐','●','◐','●','●','●','◐','◐','●','●','○','◐','◐','◐','●','◐','◐','◐','○','○','○','○','○','○'] },
+  { name: 'Tool sandboxing', s: ['●','◐','●','●','◐','◐','●','●','●','◐','◐','●','◐','◐','●','◐','◐','●','○','◐','◐','○','○','○','●','●','●'] },
+  { name: 'Per-user/session containers', s: ['●','◐','◐','◐','○','○','●','◐','●','○','○','◐','○','◐','●','●','◐','●','○','○','○','○','○','○','●','●','◐'] },
+  { name: 'Quotas and model management', s: ['●','◐','●','●','◐','◐','○','○','◐','○','○','○','○','○','◐','◐','◐','◐','◐','◐','◐','●','○','◐','◐','○','○'] },
+  { name: 'Cost attribution and audit', s: ['●','◐','◐','◐','◐','◐','◐','○','◐','◐','●','◐','◐','◐','◐','◐','◐','◐','◐','◐','◐','●','○','○','◐','◐','○'] },
+  { name: 'Human approval', s: ['●','○','◐','○','○','○','●','○','◐','○','●','○','○','◐','◐','○','○','○','○','○','○','○','○','○','○','○','○'] },
+  { name: 'File upload / download', s: ['●','●','●','●','●','●','◐','◐','●','◐','◐','◐','◐','◐','◐','●','◐','◐','◐','●','●','○','●','●','●','○','○'] },
+  { name: 'Multi-agent collaboration', s: ['●','○','●','●','○','◐','◐','◐','◐','◐','●','●','●','●','●','◐','◐','●','◐','◐','◐','○','○','○','○','○','○'] },
+  { name: 'Org structure / multi-tenancy', s: ['○','●','●','●','◐','●','○','○','◐','○','○','○','○','○','◐','●','●','◐','○','○','◐','●','◐','◐','◐','◐','○'] },
+  { name: 'Desktop / local clients', s: ['○','○','○','○','○','○','◐','○','◐','○','○','○','○','○','○','○','○','○','○','●','●','○','○','○','○','○','○'] },
 ];
 </script>
 
@@ -196,15 +194,15 @@ const requirements = [
 
 # Platform benchmark research
 
-This page benchmarks "user-facing platform" requirements gathered from Linux.do topic 2854294 (the original post plus 146 replies) against 25+ open-source projects, including the technical principles behind each capability, together with 28 **isomorphic architecture diagrams** (one shared six-layer structure, one shared status legend — flip through them side by side to see who has which slot).
+This page benchmarks "user-facing platform" requirements gathered from Linux.do topic 2854294 (the original post plus 146 replies) against 25+ open-source projects, including the technical principles behind each capability, together with 27 **isomorphic architecture diagrams** (one shared six-layer structure, one shared status legend — flip through them side by side to see who has which slot).
 
-Legend: **● native support　◐ partial / needs a fork　○ missing　★ added by this transformation**.
+Legend: **● native support　◐ partial / needs a fork　○ missing　★ recently added**.
 
 The full research process, gap analysis and transformation plan live in the repository: `docs/design-docs/LuBanAgent-platform-research-and-transformation.md`.
 
 ## Requirements × 28 projects matrix {#comparison-table}
 
-The big table: **each column is a project** (LuBan today / transformed first for easy comparison), each row is a requirement, and the **last row embeds every project's isomorphic architecture diagram** (click to enlarge). It is wide and **scrolls horizontally** with the leftmost requirement column frozen. Cells are coarse verdicts: **● native　◐ partial / needs a fork　○ missing**; per-item evidence, descriptions and technical principles are in the [detail table](#detail-table).
+The big table: **each column is a project** (LuBanAgent first for easy comparison), each row is a requirement, and the **last row embeds every project's isomorphic architecture diagram** (click to enlarge). It is wide and **scrolls horizontally** with the leftmost requirement column frozen. Cells are coarse verdicts: **● native　◐ partial / needs a fork　○ missing**; per-item evidence, descriptions and technical principles are in the [detail table](#detail-table).
 
 <div class="matrix-wrap">
 <table class="matrix">
@@ -245,39 +243,9 @@ The big table: **each column is a project** (LuBan today / transformed first for
 | Org structure / multi-tenancy | Departments, tenants, row-level isolation | Dify ● (tenant model); FastGPT ● (teams); YC-QM ●; MultiUserClaw ●; LuBanAgent ○ (explicitly out of scope; see §4 of the research report) | tenant_id threaded through all tables; RBAC user→role→permission adjudicated per request; row-level isolation via mandatory tenant predicates (PostgreSQL RLS or application layer) |
 | Desktop / local clients | Agents run on employee machines, isolation for free | WorkBuddy ●; QwenPaw ● (web + desktop); Cherry Studio model ● (#20); LuBanAgent ○ (no client) | Electron/Tauri shell + local runtime process; config/resources pulled from the management center; direct local file access, no server sandbox needed |
 
-## Open-source projects collected from the thread {#project-panorama}
+## Isomorphic architecture gallery (27 diagrams) {#architecture-gallery}
 
-| Project | Track | Thread feedback |
-| --- | --- | --- |
-| Open WebUI | Web portal | Top-voted practice (#40, 35 upvotes); multi-user isolation + centralized skills/MCP; resource-hungry, file-handling pitfalls |
-| Dify / Coze | Low-code platforms | "Has everything" (#23/#88); orchestration-leaning, no codex-style task execution (#115/#117) |
-| codex app server | Base | The OP's final choice; official advice is danger-full-access inside a container |
-| DSH | Base | Frequent complaints: breaking changes, hard to fork (#27/#47) |
-| OpenHands | Platform | Fits the requirements but auth requires the enterprise edition (#11) |
-| FastGPT | Knowledge platform | A fit when knowledge bases are the priority (#13) |
-| LibreChat | Chat portal | Feature-complete but needs a fork (#76) |
-| AgentScope | Framework | Official workspace/sandbox support, Python/Java dual stack (#61) |
-| Mastra | Framework | Recommended in docs (#64) |
-| deer-flow | Framework | Forkable but with heavy changes (#10/#25), pairs with BwrapSandboxProvider (#26) |
-| pi | Minimal harness | Design ideas cited repeatedly (#18/#30/#32/#38/#77) |
-| OpenAI Agents SDK | SDK | sandbox/skill primitives complete, verified working (#58) |
-| Hermes | Agent runtime | Shared instances + profiles; isolation insufficient (#14/#111) |
-| Multica | Human-agent platform | Local/remote-cloud runtimes; shared resources as a git repo (#78/#103) |
-| AgentTeams (Alibaba HiClaw) | Multi-agent platform | One Docker per agent; Matrix chat underneath; permission management (#33) |
-| MultiUserClaw | Multi-tenant | Signup/admin/shared portals complete, in company use for six months (#143) |
-| Tether-AI | Base | Planned as a development base (#144) |
-| YC-QM | Multi-user harness | Org permission management, server deployment (#75/#141) |
-| WorkBuddy | Client | Backend distributing API keys (#51) |
-| QwenPaw | Self-hosted assistant | Web + desktop, multi-channel, skill extensions (#68) |
-| LiteLLM | Model gateway | Standard recommendation for model/quota/key management (#63) |
-| WebKnorv / Weknora | Knowledge base | Tencent open source / ima open-source edition (#84/#86) |
-| RAGFlow | Knowledge base | "A simple RAGFlow is enough" (#72) |
-| E2B-like / OpenSandbox / K8s | Cloud sandbox | Session-level container orchestration; CTF-platform precedent at scale (#70/#93) |
-| Bwrap / CubeSandbox | Light sandbox | Userspace namespace sandboxing (#19/#26) |
-
-## Isomorphic architecture gallery (28 diagrams) {#architecture-gallery}
-
-All diagrams share one six-layer structure and one status legend. Place any diagram next to [LuBanAgent today](#lubanagent-current): gray dashed boxes (○) are what that project lacks, solid colored boxes (●) are what it has and LuBan should evaluate. Then check [LuBanAgent transformed](#lubanagent-transformed) for how the ★ items close the gap. Click any image to open the full-size SVG. Generator: `scripts/gen-platform-comparison-diagrams.py` (data-driven and reproducible).
+All diagrams share one six-layer structure and one status legend. Place any diagram next to [LuBanAgent](#lubanagent): gray dashed boxes (○) are what that project lacks, solid colored boxes (●) are what both have, and ★ marks capabilities recently added to LuBanAgent. Click any image to enlarge it in place. Generator: `scripts/gen-platform-comparison-diagrams.py` (data-driven and reproducible).
 
 <section v-for="d in diagrams" :key="d.id" class="diagram-card">
 <h3 :id="d.id">{{ d.name }}</h3>

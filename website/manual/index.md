@@ -15,7 +15,7 @@
 | [API 参考](./api/rest.md) | REST 端点全表、SSE 事件协议与错误码、CLI 命令全表 |
 | [改造指南](./customization/overview.md) | 把基座改造成你的业务：写 Tool/Skill、写流程与团队、换模型与后端、接业务系统、跟上游升级 |
 | [部署运维](./deploy.md) | Docker 全栈、生产安全清单、观测后端 |
-| [调研报告](./research/platform-comparison.md) | 需求维度 × 25+ 开源项目支持情况与技术原理，附 28 张同构架构图 |
+| [调研报告](./research/platform-comparison.md) | 需求维度 × 27 个开源项目对比矩阵与技术原理，附 27 张同构架构图 |
 
 ## 怎么查
 

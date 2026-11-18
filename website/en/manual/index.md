@@ -15,7 +15,7 @@ If this is your first look at the project, start with the [project introduction]
 | [API reference](./api/rest.md) | Full REST endpoint table, SSE event protocol and error codes, full CLI command table |
 | [Customization guide](./customization/overview.md) | Turning the base into your business: writing Tools/Skills, graphs and teams, swapping models and backends, business integration, upstream upgrades |
 | [Deployment](./deploy.md) | Docker full stack, production security checklist, observability backends |
-| [Benchmark research](./research/platform-comparison.md) | Requirements × 25+ open-source projects with support status and technical principles, plus 28 isomorphic diagrams |
+| [Benchmark research](./research/platform-comparison.md) | Requirements × 27 open-source projects comparison matrix and technical principles, plus 27 isomorphic diagrams |
 
 ## How to use this manual
 
