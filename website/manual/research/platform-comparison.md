@@ -78,7 +78,25 @@ const projects = [
   { id: 'k8s-session-sandbox', name: 'K8s 沙箱' },
   { id: 'bwrap-cubesandbox', name: 'Bwrap' },
 ];
-const sym = { full: '●', part: '◐', none: '○' };
+const st = { '●': 'full', '◐': 'part', '○': 'none' };
+const descs = {
+  'Web 用户端聊天门户': '非技术用户浏览器即用，无侧栏全屏对话',
+  '注册/登录/账号体系': '外部人员自助注册或管理员开户，SSO',
+  '多用户会话隔离': 'A 的上下文不能串到 B',
+  '会话历史持久化': '刷新/换设备能找回历史',
+  '知识库配置+按权限分配': '平台建库，按用户/角色授权可见',
+  'Skill 统一配置+可见范围': '平台统一装 Skill，低权限看不到不该看的',
+  'MCP 统一配置+动态注册': '平台统一接 MCP Server，按人下发',
+  '工具执行沙箱隔离': '防止工具代码破坏宿主机',
+  '每用户/每会话容器': '强隔离兜底',
+  '用量配额与模型管理': '按人/部门限 Token 和费用',
+  '费用归因与审计': '每次调用算清谁花了多少钱、干了什么',
+  '高风险操作人工审批': '大额退款等敏感动作人工确认',
+  '文件上传/下载/输出物': '用户传文档提问、下载生成物',
+  '多 Agent 协作': '复杂任务拆给多个 Agent',
+  '组织架构/多租户': '部门、租户、行级数据隔离',
+  '桌面端/本地客户端': 'Agent 在员工本机执行，天然隔离',
+};
 
 // 每行状态数组与 projects 顺序一一对应；粗粒度结论，逐项依据见下方明细表。
 const requirements = [
@@ -137,6 +155,14 @@ const requirements = [
   border-radius: 8px;
 }
 /* 大总表：列=项目，行=需求维度，末行内嵌架构图缩略图 */
+.platform-research .req-desc {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--vp-c-text-2);
+}
+
 .platform-research .matrix th,
 .platform-research .matrix td {
   min-width: 60px;
@@ -202,7 +228,7 @@ const requirements = [
 
 ## 需求维度 × 28 个项目总表 {#comparison-table}
 
-大表：**每一列是一个项目**（LuBanAgent 放最前，便于对照），每行一个需求维度，**最后一行是各项目的同构架构图**（点击放大）。表格很宽，可**横向滑动**，最左"需求维度"列固定。单元格为粗粒度状态：**● 原生支持　◐ 需二开/部分　○ 缺失**；逐项依据、需求说明与技术原理见下方[明细表](#detail-table)。
+大表：**每一列是一个项目**（LuBanAgent 放最前，便于对照），每行一个需求维度，**最后一行是各项目的同构架构图**（点击放大）。表格很宽，可**横向滑动**，最左"需求维度"列固定。单元格为粗粒度状态：**● 原生支持　◐ 需二开/部分　○ 缺失**；需求说明见首列小字。
 
 <div class="matrix-wrap">
 <table class="matrix">
@@ -211,8 +237,8 @@ const requirements = [
 </thead>
 <tbody>
 <tr v-for="r in requirements" :key="r.name">
-<th>{{ r.name }}</th>
-<td v-for="(p, i) in projects" :key="p.id" :class="'st-' + r.s[i]">{{ sym[r.s[i]] }}</td>
+<th>{{ r.name }}<span class="req-desc">{{ descs[r.name] }}</span></th>
+<td v-for="(p, i) in projects" :key="p.id" :class="'st-' + st[r.s[i]]">{{ r.s[i] }}</td>
 </tr>
 <tr class="matrix-diagrams">
 <th>同构架构图</th>
@@ -221,27 +247,6 @@ const requirements = [
 </tbody>
 </table>
 </div>
-
-### 支持明细与技术原理 {#detail-table}
-
-| 需求维度 | 需求说明 | 开源项目支持情况 | 技术原理 |
-| --- | --- | --- | --- |
-| Web 用户端聊天门户 | 非技术用户浏览器即用，无侧栏全屏对话 | Open WebUI ●；Dify ●（应用发布页）；LibreChat ●；LuBanAgent ◐（/chat 为示例级） | SPA（Svelte/React）+ FastAPI/Express 后端；SSE 流式 token 推送；会话状态存 DB，前端仅渲染 |
-| 用户注册/登录/账号体系 | 外部人员自助注册或管理员开户，SSO | LibreChat ●（内置注册+OAuth）；Open WebUI ●；Dify ●（租户+邀请制）；MultiUserClaw ●（多租户注册）；LuBanAgent ◐（仅工作台 RBAC 账号） | 本地账号表 + bcrypt/argon2 口令哈希；OAuth2/OIDC 跳转换取 id_token；会话用签名 JWT 或服务端 session cookie |
-| 多用户会话隔离 | A 的上下文不能串到 B | OpenHands ●（每会话容器）；MultiUserClaw ●；LuBanAgent ◐（单用户示例） | 每个 session 绑定 subject_id，ContextVar 贯穿请求链；DB 层所有查询带 tenant/subject 谓词（行级过滤）；内存态靠 per-request 依赖注入隔离 |
-| 会话历史持久化 | 刷新/换设备能找回历史 | Open WebUI ●；LibreChat ●（Mongo 会话树）；Dify ●；LuBanAgent ◐（Run 留痕但 /chat 无会话列表） | 消息表（session_id, role, content, seq）；前端拉列表分页；消息写入与 SSE 完成事件解耦，异步落库 |
-| 知识库统一配置+按权限分配 | 平台建库，按用户/角色授权可见 | Dify ●（知识库+团队权限）；FastGPT ●（团队协作）；RAGFlow ●；#39 提到厂商产品 ●；LuBanAgent ◐（有库管理，无分配） | 知识库表 + ACL 关联表（kb_id, subject/role, perm）；检索前先过权限谓词再走向量检索；文档切块→embedding→向量库（Qdrant/Milvus），混合检索 BM25+向量 |
-| Skill 统一配置+可见范围 | 平台统一装 Skill，低权限看不到不该看的 | #39 厂商产品 ●；WorkBuddy ◐；#36 skill 市场+CLI ●；LuBanAgent ◐（Skill 管理页有"分配"，缺用户端维度） | Skill 清单存 DB（版本化）；分配表（skill_id, subject/role）；运行时按 subject 过滤后注册进 Agent 工具集 |
-| MCP 统一配置+动态注册 | 平台统一接 MCP Server，按人下发 | Dify ◐（工具插件制）；Multica ●（共享 MCP 以 git repo 配置）；AgentScope ●；LuBanAgent ◐（MCP Client 有，缺按人下发） | 网关持有 MCP Server 连接池（stdio/SSE）；按用户生成"资源视图"，run 装配时把可见 MCP tool 动态 bind 进 LangGraph prebuilt agent 的 tools 参数 |
-| 工具执行环境隔离（沙箱） | 防止工具代码破坏宿主机 | OpenHands ●（Docker runtime）；Dify ●（dify-sandbox：seccomp+独立进程）；deer-flow ◐（Bwrap）；E2B/OpenSandbox ●（microVM/gVisor）；LuBanAgent ◐（治理闸有，进程沙箱无） | 四档隔离强度：进程级（seccomp/bubblewrap namespace+cgroup）→ 容器级（namespace 全套+只读 rootfs+资源限额）→ microVM（Firecracker 硬件虚拟化）→ 无（仅代码审查+治理闸）。LuBan Tool 是受审 Python 代码，治理闸为主，沙箱可选 |
-| 每用户/每会话容器 | 强隔离兜底 | #36 ●（一人一容器）；AgentTeams ●（一 Agent 一容器）；#82 ●（一会话一容器）；#70 K8s ● | Docker/K8s API 动态建 Pod/Container，挂载 per-user volume；空闲回收/跑完销毁；反代按子域路由（hermes.youhost.com/usera/） |
-| 用量配额与模型管理 | 按人/部门限 Token 和费用 | LiteLLM ●（proxy 层配额+预算+虚拟 Key）；Dify ●；Open WebUI ◐；LuBanAgent ◐（有全局预算三道闸，缺按主体配额） | 网关层拦截：请求前查配额表（已用<限额），请求后异步累计用量；token 用 tiktoken 估算、响应回填真实 usage；超限返回 429 并熔断 |
-| 费用归因与审计 | 每次调用算清谁花了多少钱、干了什么 | LuBanAgent ●（Run/Trace 全程留痕+费用归因，帖子同类方案普遍缺）；LiteLLM ●（调用级日志）；Open WebUI ◐ | 每次 Run 记录 model/tool/token/费用，写入 trace 树；双写观测后端；审计事件（登录/审批/权限变更）独立 append-only 表 |
-| 高风险操作人工审批 | 大额退款等敏感动作人工确认 | LuBanAgent ●（审批持久化、并发安全、可恢复）；Dify ◐；OpenAI Agents SDK ●（guardrail+interrupt）；#58 直接禁系统操作 ◐ | Tool 执行前检查风险标签→挂起 Run、持久化待审批记录→UI/API 批准/拒绝→恢复 Run 继续；审批状态机与 Run 生命周期绑定 |
-| 文件上传/下载/输出物 | 用户传文档提问、下载生成物 | Open WebUI ●（坑多）；Dify ●（文件变量）；#84 ●（esbuild wasm 在线编译）；LuBanAgent ◐（知识库上传有，会话级文件无） | 上传走预签名直传或后端代理落对象存储/本地盘；会话文件挂 per-session 目录；下载经鉴权签名 URL，避免 Open WebUI 式沙盒文件路由坑 |
-| 多 Agent 协作 | 复杂任务拆给多个 Agent | AgentTeams ●（Matrix 群聊多 Agent）；AgentScope ●（消息传递）；LuBanAgent ●（LangGraph supervisor 委派，编排 Run 是会话 Run 子 Run） | supervisor 节点按任务图路由到子 Agent；共享黑板/消息总线传递状态；预算继承+取消传播 |
-| 组织架构/多租户 | 部门、租户、行级数据隔离 | Dify ●（租户模型）；FastGPT ●（团队）；YC-QM ●；MultiUserClaw ●；LuBanAgent ○（定位明确不做，见调研报告 §4 定位修订） | tenant_id 贯穿所有表；RBAC：user→role→permission，后端逐请求裁决；行级隔离=查询层强制 tenant 谓词（PostgreSQL RLS 或应用层） |
-| 桌面端/本地客户端 | Agent 在员工本机执行，天然隔离 | WorkBuddy ●；QwenPaw ●（Web+桌面）；Cherry Studio 模式 ●（#20）；LuBanAgent ○（无客户端） | Electron/Tauri 壳 + 本地 runtime 进程；配置/资源从管理中心拉取；本机文件直接访问，无需服务端沙箱 |
 
 ## 同构架构图集（27 张） {#architecture-gallery}
 

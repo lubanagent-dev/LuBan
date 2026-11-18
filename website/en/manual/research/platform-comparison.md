@@ -78,7 +78,25 @@ const projects = [
   { id: 'k8s-session-sandbox', name: 'K8s' },
   { id: 'bwrap-cubesandbox', name: 'Bwrap' },
 ];
-const sym = { full: '●', part: '◐', none: '○' };
+const st = { '●': 'full', '◐': 'part', '○': 'none' };
+const descs = {
+  'Web chat portal': 'Non-technical users work in the browser, sidebar-free chat',
+  'Registration / accounts': 'Self-service signup or admin-issued accounts, SSO',
+  'Per-user session isolation': "A's context must never leak into B's",
+  'Session history persistence': 'History survives refreshes and devices',
+  'Knowledge bases with grants': 'Platform-managed bases, visibility per user/role',
+  'Skills with visibility scopes': 'Platform-installed skills, hidden from unauthorized users',
+  'MCP central config': 'Platform-hosted MCP servers, distributed per user',
+  'Tool sandboxing': 'Tool code must not break the host',
+  'Per-user/session containers': 'Strong-isolation backstop',
+  'Quotas and model management': 'Token and cost limits per user/department',
+  'Cost attribution and audit': 'Who spent what on which call, doing what',
+  'Human approval': 'Large refunds and similar actions need confirmation',
+  'File upload / download': 'Users upload documents and download outputs',
+  'Multi-agent collaboration': 'Decompose complex tasks across agents',
+  'Org structure / multi-tenancy': 'Departments, tenants, row-level isolation',
+  'Desktop / local clients': 'Agents run on employee machines, isolation for free',
+};
 
 // Each status array is aligned with `projects`; coarse verdicts, see the detail table.
 const requirements = [
@@ -137,6 +155,14 @@ const requirements = [
   border-radius: 8px;
 }
 /* Big matrix: columns = projects, rows = requirements, last row embeds diagrams */
+.platform-research .req-desc {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--vp-c-text-2);
+}
+
 .platform-research .matrix th,
 .platform-research .matrix td {
   min-width: 60px;
@@ -202,7 +228,7 @@ The full research process, gap analysis and transformation plan live in the repo
 
 ## Requirements × 28 projects matrix {#comparison-table}
 
-The big table: **each column is a project** (LuBanAgent first for easy comparison), each row is a requirement, and the **last row embeds every project's isomorphic architecture diagram** (click to enlarge). It is wide and **scrolls horizontally** with the leftmost requirement column frozen. Cells are coarse verdicts: **● native　◐ partial / needs a fork　○ missing**; per-item evidence, descriptions and technical principles are in the [detail table](#detail-table).
+The big table: **each column is a project** (LuBanAgent first for easy comparison), each row is a requirement, and the **last row embeds every project's isomorphic architecture diagram** (click to enlarge). It is wide and **scrolls horizontally** with the leftmost requirement column frozen. Cells are coarse verdicts: **● native　◐ partial / needs a fork　○ missing**; requirement descriptions appear under each row label.
 
 <div class="matrix-wrap">
 <table class="matrix">
@@ -211,8 +237,8 @@ The big table: **each column is a project** (LuBanAgent first for easy compariso
 </thead>
 <tbody>
 <tr v-for="r in requirements" :key="r.name">
-<th>{{ r.name }}</th>
-<td v-for="(p, i) in projects" :key="p.id" :class="'st-' + r.s[i]">{{ sym[r.s[i]] }}</td>
+<th>{{ r.name }}<span class="req-desc">{{ descs[r.name] }}</span></th>
+<td v-for="(p, i) in projects" :key="p.id" :class="'st-' + st[r.s[i]]">{{ r.s[i] }}</td>
 </tr>
 <tr class="matrix-diagrams">
 <th>Architecture diagram</th>
@@ -221,27 +247,6 @@ The big table: **each column is a project** (LuBanAgent first for easy compariso
 </tbody>
 </table>
 </div>
-
-### Support details and technical principles {#detail-table}
-
-| Requirement | Description | Open-source support | Technical principle |
-| --- | --- | --- | --- |
-| Web chat portal | Non-technical users work in the browser, full-screen sidebar-free chat | Open WebUI ●; Dify ● (app publishing); LibreChat ●; LuBanAgent ◐ (/chat is demo-grade) | SPA (Svelte/React) + FastAPI/Express backend; SSE token streaming; session state in DB, frontend only renders |
-| Registration / login / accounts | Self-service signup or admin-issued accounts, SSO | LibreChat ● (built-in signup + OAuth); Open WebUI ●; Dify ● (tenant + invites); MultiUserClaw ● (multi-tenant signup); LuBanAgent ◐ (workbench RBAC only) | Local account table + bcrypt/argon2 hashing; OAuth2/OIDC redirect exchanging id_token; signed JWT or server-side session cookies |
-| Per-user session isolation | A's context must never leak into B's | OpenHands ● (container per session); MultiUserClaw ●; LuBanAgent ◐ (single-user demo) | Each session binds a subject_id carried through the request chain via ContextVar; DB queries always include tenant/subject predicates (row-level filtering); in-memory state isolated via per-request dependency injection |
-| Session history persistence | History survives refreshes and devices | Open WebUI ●; LibreChat ● (Mongo session trees); Dify ●; LuBanAgent ◐ (Runs are recorded but /chat has no session list) | Message table (session_id, role, content, seq); paginated list API; message writes decoupled from SSE completion events, persisted asynchronously |
-| Knowledge bases with per-user grants | Platform-managed bases, visibility per user/role | Dify ● (KB + team permissions); FastGPT ● (team collaboration); RAGFlow ●; commercial products per #39 ●; LuBanAgent ◐ (KB management exists, no per-user grants) | KB table + ACL join table (kb_id, subject/role, perm); permission predicates run before vector search; chunking → embedding → vector store (Qdrant/Milvus), hybrid BM25 + vector retrieval |
-| Skills with visibility scopes | Platform-installed skills, hidden from unauthorized users | Commercial products per #39 ●; WorkBuddy ◐; skill marketplace + CLI per #36 ●; LuBanAgent ◐ (workbench-level assignment exists, no end-user dimension) | Skill catalog in DB (versioned); assignment table (skill_id, subject/role); runtime filters by subject before registering tools into the agent |
-| MCP with dynamic registration | Platform-hosted MCP servers, distributed per user | Dify ◐ (plugin model); Multica ● (shared MCP via git repo config); AgentScope ●; LuBanAgent ◐ (MCP client exists, no per-user distribution) | Gateway holds MCP server connection pools (stdio/SSE); per-user "resource views" bind visible MCP tools into the LangGraph prebuilt agent's tools parameter at run assembly |
-| Tool execution isolation (sandbox) | Tool code must not break the host | OpenHands ● (Docker runtime); Dify ● (dify-sandbox: seccomp + isolated processes); deer-flow ◐ (Bwrap); E2B/OpenSandbox ● (microVM/gVisor); LuBanAgent ◐ (governance gates only, no process sandbox) | Four isolation tiers: process (seccomp/bubblewrap namespace+cgroup) → container (full namespaces + read-only rootfs + limits) → microVM (Firecracker hardware virtualization) → none (code review + governance gates). LuBan tools are reviewed Python; gates are primary, sandbox optional |
-| Per-user / per-session containers | Strong-isolation backstop | #36 ● (one container per user); AgentTeams ● (one per agent); #82 ● (one per session); K8s per #70 ● | Docker/K8s API creates pods/containers dynamically with per-user volumes; idle reclamation or run-end teardown; reverse proxy routes by subdomain |
-| Quotas and model management | Token and cost limits per user/department | LiteLLM ● (proxy-level quotas + budgets + virtual keys); Dify ●; Open WebUI ◐; LuBanAgent ◐ (global three-gate budgets, no per-subject quotas) | Gateway intercepts: check quota table (used < limit) before, accumulate usage asynchronously after; tiktoken estimates with real usage backfilled; 429 + circuit break on breach |
-| Cost attribution and audit | Who spent what on which call, doing what | LuBanAgent ● (Run/Trace with cost attribution — rare among peers); LiteLLM ● (per-call logs); Open WebUI ◐ | Each Run records model/tool/tokens/cost into a trace tree; dual-writes to the observability backend; audit events (login/approval/permission changes) in a separate append-only table |
-| Human approval for risky actions | Large refunds and similar actions need confirmation | LuBanAgent ● (persisted, concurrency-safe, resumable approvals); Dify ◐; OpenAI Agents SDK ● (guardrail + interrupt); #58 disables system operations ◐ | Pre-execution risk-label check → suspend Run and persist the approval request → approve/reject via UI/API → resume the Run; approval state machine tied to the Run lifecycle |
-| File upload / download / artifacts | Users upload documents and download outputs | Open WebUI ● (many pitfalls); Dify ● (file variables); esbuild-wasm compile per #84 ●; LuBanAgent ◐ (KB upload exists, no session files) | Pre-signed direct upload or backend proxy to object storage/local disk; per-session file directories; downloads via authorized signed URLs, avoiding Open WebUI-style sandbox file routing pitfalls |
-| Multi-agent collaboration | Decompose complex tasks across agents | AgentTeams ● (Matrix multi-agent chat); AgentScope ● (message passing); LuBanAgent ● (LangGraph supervisor delegation; orchestration Runs are children of session Runs) | Supervisor nodes route via the task graph to sub-agents; shared blackboard/message bus carries state; budget inheritance and cancellation propagation |
-| Org structure / multi-tenancy | Departments, tenants, row-level isolation | Dify ● (tenant model); FastGPT ● (teams); YC-QM ●; MultiUserClaw ●; LuBanAgent ○ (explicitly out of scope; see §4 of the research report) | tenant_id threaded through all tables; RBAC user→role→permission adjudicated per request; row-level isolation via mandatory tenant predicates (PostgreSQL RLS or application layer) |
-| Desktop / local clients | Agents run on employee machines, isolation for free | WorkBuddy ●; QwenPaw ● (web + desktop); Cherry Studio model ● (#20); LuBanAgent ○ (no client) | Electron/Tauri shell + local runtime process; config/resources pulled from the management center; direct local file access, no server sandbox needed |
 
 ## Isomorphic architecture gallery (27 diagrams) {#architecture-gallery}
 
