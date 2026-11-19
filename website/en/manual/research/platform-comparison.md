@@ -18,35 +18,6 @@ const onKeydown = (e) => { if (e.key === 'Escape') closeLightbox(); };
 onMounted(() => window.addEventListener('keydown', onKeydown));
 onUnmounted(() => window.removeEventListener('keydown', onKeydown));
 
-const diagrams = [
-  { id: 'lubanagent', name: 'LuBanAgent', tagline: 'Governance gates + portal, per-subject assignment, dynamic assembly and quotas' },
-  { id: 'open-webui', name: 'Open WebUI', tagline: 'Portal essentials nearly complete; governance, approvals and quotas missing' },
-  { id: 'dify', name: 'Dify', tagline: 'Tenants, quotas, sandbox and knowledge bases; approvals and budget governance missing' },
-  { id: 'coze-studio', name: 'Coze Studio', tagline: 'Same track as Dify; orchestration, knowledge bases and plugins complete' },
-  { id: 'librechat', name: 'LibreChat', tagline: 'Accounts, sessions, files and MCP complete; governance thin' },
-  { id: 'fastgpt', name: 'FastGPT', tagline: 'Strong knowledge-base and team permissions; weak execution isolation' },
-  { id: 'codex-app-server', name: 'Codex App Server', tagline: 'Strong harness/sandbox/approval modes; platform layer fully self-built' },
-  { id: 'dsh', name: 'DSH', tagline: 'Good sandbox/workspace abstractions; risky for production' },
-  { id: 'openhands', name: 'OpenHands', tagline: 'Benchmark for per-session container isolation; auth is enterprise-only' },
-  { id: 'pi', name: 'pi', tagline: 'Minimal harness, referenced for design ideas' },
-  { id: 'openai-agents-sdk', name: 'OpenAI Agents SDK', tagline: 'Complete session/guardrail/tracing primitives' },
-  { id: 'agentscope', name: 'AgentScope', tagline: 'Message-passing multi-agent with official sandbox support' },
-  { id: 'mastra', name: 'Mastra', tagline: 'TS-ecosystem primitives; no portal' },
-  { id: 'deer-flow', name: 'deer-flow', tagline: 'Research-oriented orchestration with plan confirmation; costly to fork' },
-  { id: 'agent-teams', name: 'AgentTeams (HiClaw)', tagline: 'One container per agent plus Matrix group chat' },
-  { id: 'multiuserclaw', name: 'MultiUserClaw', tagline: 'Multi-tenant portal out of the box; governance weak' },
-  { id: 'yc-qm', name: 'YC-QM', tagline: 'Organization permissions are the selling point' },
-  { id: 'multica', name: 'Multica', tagline: 'Local and cloud-sandbox runtimes; shared resources as a git repo' },
-  { id: 'hermes', name: 'Hermes', tagline: 'Strong skill ecosystem; profiles are not permission isolation' },
-  { id: 'workbuddy', name: 'WorkBuddy', tagline: 'Client distribution model (route D example)' },
-  { id: 'qwenpaw', name: 'QwenPaw', tagline: 'Strong channel reach; no multi-user support' },
-  { id: 'litellm', name: 'LiteLLM', tagline: 'Standard for quotas and virtual keys; no agent layer' },
-  { id: 'weknora', name: 'Weknora / WebKnorv', tagline: 'Pure knowledge base' },
-  { id: 'ragflow', name: 'RAGFlow', tagline: 'Differentiated document parsing depth' },
-  { id: 'e2b-opensandbox', name: 'E2B / OpenSandbox', tagline: 'Sandbox-as-a-service on microVMs' },
-  { id: 'k8s-session-sandbox', name: 'K8s session sandbox', tagline: 'Upper bound with Pod-level hard isolation' },
-  { id: 'bwrap-cubesandbox', name: 'Bwrap / CubeSandbox', tagline: 'Lightweight process-level sandbox' },
-];
 
 // Matrix column order: LuBanAgent first, then the research order.
 const projects = [
@@ -145,15 +116,6 @@ const requirements = [
   z-index: 3;
   background: var(--vp-c-bg-soft);
 }
-.platform-research .diagram-card {
-  margin: 1.5rem 0 2.5rem;
-}
-.platform-research .diagram-card img {
-  width: 100%;
-  height: auto;
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 8px;
-}
 /* Big matrix: columns = projects, rows = requirements, last row embeds diagrams */
 .platform-research .req-desc {
   display: block;
@@ -248,15 +210,29 @@ The big table: **each column is a project** (LuBanAgent first for easy compariso
 </table>
 </div>
 
-## Isomorphic architecture gallery (27 diagrams) {#architecture-gallery}
+## Scenario-based recommendations {#recommendations}
 
-All diagrams share one six-layer structure and one status legend. Place any diagram next to [LuBanAgent](#lubanagent): gray dashed boxes (○) are what that project lacks, solid colored boxes (●) are what both have, and ★ marks capabilities recently added to LuBanAgent. Click any image to enlarge it in place. Generator: `scripts/gen-platform-comparison-diagrams.py` (data-driven and reproducible).
+The goal of benchmarking is picking the right tool per scenario, not defaulting to LuBanAgent everywhere. Decide in three steps: does the agent run real tasks → who uses it → how much governance do you need.
 
-<section v-for="d in diagrams" :key="d.id" class="diagram-card">
-<h3 :id="d.id">{{ d.name }}</h3>
-<p>{{ d.tagline }}</p>
-<img class="zoomable" :src="diagramUrl(d.id)" :alt="`${d.name} architecture diagram`" loading="lazy" @click="openLightbox(diagramUrl(d.id))" />
-</section>
+| Your scenario | Recommendation | Alternatives | Why |
+| --- | --- | --- | --- |
+| A shared ChatGPT-style Q&A portal for the team (mostly chat, no task execution) | Open WebUI | LibreChat | Works out of the box with accounts/sessions/files; an engineering base is overkill |
+| Business/ops staff composing AI apps themselves (workflows, plugins, KB Q&A) | Dify | Coze Studio / FastGPT | Low-code orchestration and app publishing are mature; codex-style real task execution is not their strength |
+| Knowledge base / RAG is the core need (many documents, high parsing quality bar) | RAGFlow | Weknora / FastGPT | Differentiated document parsing depth; composable with any platform |
+| Unified model access, quotas, cost accounting and virtual keys | LiteLLM | — | The standard model gateway; stacks on top of any platform above — not an either/or |
+| Agents must do real work: execute code, operate tools, run long tasks | Codex App Server / OpenHands | OpenAI Agents SDK (assemble yourself) | Harness + sandbox + approvals are the core; note OpenHands auth is enterprise-only |
+| In-company multi-user agent platform: portal + per-user assignment + quotas + approvals + audit, self-hosted data | LuBanAgent | MultiUserClaw / YC-QM (lightweight self-hosting) | Governance gates plus portal/assignment/dynamic assembly/subject quotas out of the box; tools are governed, lower risk than free-shell setups |
+| Framework-level R&D on multi-agent collaboration | AgentScope / Mastra | OpenAI Agents SDK / pi | Provides primitives and design ideas; portal and governance are DIY |
+| Running untrusted code/plugins with strict isolation | E2B / OpenSandbox | K8s session pods / Bwrap | Sandboxes are components, not platforms; combinable with anything above |
+| Agents execute on employee machines (desktop-first) | WorkBuddy / QwenPaw | Cherry Studio-style DIY | Local execution is isolated for free; no server sandbox needed |
+
+Three selection principles:
+
+1. **First ask whether agents run real tasks**: chat-only → portal tools (Open WebUI/LibreChat); real execution → base/harness tools (LuBanAgent/Codex/OpenHands).
+2. **Then ask who uses it**: for developers, an SDK/framework is enough; for everyone in the company, you need portal, permissions and quota governance.
+3. **Components compose**: LiteLLM (gateway) + E2B (sandbox) + any platform is a common stack — no need to pick a monolith.
+
+LuBanAgent's boundary: when you need "self-hosted data + real task execution + enterprise governance (assignment/quotas/approvals/audit)" all at once, it is the most convenient out-of-box option; for only one of those (say, a pure chat portal), a lighter tool fits better.
 
 <div v-if="lightbox" class="lightbox" @click="closeLightbox">
 <img :src="lightbox" alt="Enlarged architecture diagram" />

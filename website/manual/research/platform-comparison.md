@@ -17,36 +17,6 @@ const onKeydown = (e) => { if (e.key === 'Escape') closeLightbox(); };
 onMounted(() => window.addEventListener('keydown', onKeydown));
 onUnmounted(() => window.removeEventListener('keydown', onKeydown));
 
-// 图集与 docs/design-docs 调研报告 §1.5 保持同源；生成脚本可复现。
-const diagrams = [
-  { id: 'lubanagent', name: 'LuBanAgent', tagline: '治理四件套 + 门户/分配/动态装配/主体配额' },
-  { id: 'open-webui', name: 'Open WebUI', tagline: '门户五件套几乎全有，治理/审批/配额缺' },
-  { id: 'dify', name: 'Dify', tagline: '租户/配额/沙箱/知识库全，审批与预算治理缺' },
-  { id: 'coze-studio', name: 'Coze Studio', tagline: '与 Dify 同赛道，编排/知识库/插件全' },
-  { id: 'librechat', name: 'LibreChat', tagline: '注册/会话/文件/MCP 齐，治理薄' },
-  { id: 'fastgpt', name: 'FastGPT', tagline: '知识库/团队权限强，执行隔离弱' },
-  { id: 'codex-app-server', name: 'Codex App Server', tagline: 'harness/沙箱/审批模式强，平台层全自建' },
-  { id: 'dsh', name: 'DSH', tagline: '沙箱/工作区抽象好，生产慎用' },
-  { id: 'openhands', name: 'OpenHands', tagline: '每会话容器隔离标杆，认证在企业版' },
-  { id: 'pi', name: 'pi', tagline: '极简 harness 理念参考' },
-  { id: 'openai-agents-sdk', name: 'OpenAI Agents SDK', tagline: 'session/guardrail/tracing 原语全' },
-  { id: 'agentscope', name: 'AgentScope', tagline: '消息传递多 Agent，沙箱官方支持' },
-  { id: 'mastra', name: 'Mastra', tagline: 'TS 生态同类原语，门户无' },
-  { id: 'deer-flow', name: 'deer-flow', tagline: '研究型编排+计划确认，二开成本高' },
-  { id: 'agent-teams', name: 'AgentTeams（HiClaw）', tagline: '一 Agent 一容器 + Matrix 群聊协作' },
-  { id: 'multiuserclaw', name: 'MultiUserClaw', tagline: '多租户门户开箱即用，治理弱' },
-  { id: 'yc-qm', name: 'YC-QM', tagline: '组织权限是卖点' },
-  { id: 'multica', name: 'Multica', tagline: 'runtime 双形态 + 资源 git repo 化' },
-  { id: 'hermes', name: 'Hermes', tagline: 'Skill 生态强，profile 非权限隔离' },
-  { id: 'workbuddy', name: 'WorkBuddy', tagline: '客户端分发模式（路线 D 实例）' },
-  { id: 'qwenpaw', name: 'QwenPaw', tagline: '渠道触达强，多用户缺' },
-  { id: 'litellm', name: 'LiteLLM', tagline: '配额/虚拟 Key 标配，无 Agent 层' },
-  { id: 'weknora', name: 'Weknora / WebKnorv', tagline: '纯知识底座' },
-  { id: 'ragflow', name: 'RAGFlow', tagline: '文档解析深度差异化' },
-  { id: 'e2b-opensandbox', name: 'E2B / OpenSandbox', tagline: 'microVM 沙箱即服务' },
-  { id: 'k8s-session-sandbox', name: 'K8s 会话沙箱', tagline: 'Pod 级硬隔离上限方案' },
-  { id: 'bwrap-cubesandbox', name: 'Bwrap / CubeSandbox', tagline: '进程级轻沙箱' },
-];
 
 // 大总表的列顺序：LuBanAgent 放最前，其余按调研顺序。
 const projects = [
@@ -145,15 +115,6 @@ const requirements = [
   z-index: 3;
   background: var(--vp-c-bg-soft);
 }
-.platform-research .diagram-card {
-  margin: 1.5rem 0 2.5rem;
-}
-.platform-research .diagram-card img {
-  width: 100%;
-  height: auto;
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 8px;
-}
 /* 大总表：列=项目，行=需求维度，末行内嵌架构图缩略图 */
 .platform-research .req-desc {
   display: block;
@@ -248,15 +209,29 @@ const requirements = [
 </table>
 </div>
 
-## 同构架构图集（27 张） {#architecture-gallery}
+## 场景选型建议 {#recommendations}
 
-全部图共用同一六层结构与同一状态标记。把任意一张图与 [LuBanAgent](#lubanagent) 并排看：灰色虚线框（○）是对方缺的能力，彩色实线框（●）是双方都有的能力，★ 标记 LuBanAgent 近期新增能力。点击图片在当前页放大。生成脚本：`scripts/gen-platform-comparison-diagrams.py`（数据驱动，可复现）。
+对标的目的是按需选型，不是所有场景都上 LuBanAgent。按"要不要跑真实任务 → 谁来用 → 治理要求多高"三步对号入座：
 
-<section v-for="d in diagrams" :key="d.id" class="diagram-card">
-<h3 :id="d.id">{{ d.name }}</h3>
-<p>{{ d.tagline }}</p>
-<img class="zoomable" :src="diagramUrl(d.id)" :alt="`${d.name} 同构架构图`" loading="lazy" @click="openLightbox(diagramUrl(d.id))" />
-</section>
+| 你的场景 | 推荐 | 备选 | 为什么 |
+| --- | --- | --- | --- |
+| 只需要团队共用的 ChatGPT 式问答门户（问答为主，不跑任务） | Open WebUI | LibreChat | 开箱即用，注册/会话/文件齐全；引入工程基座是杀鸡用牛刀 |
+| 业务/运营人员自己编排 AI 应用（工作流、插件、知识库问答） | Dify | Coze Studio / FastGPT | 低代码编排+应用发布成熟；codex 式真实任务执行不是它们的强项 |
+| 核心诉求是知识库/RAG（文档量大、解析质量要求高） | RAGFlow | Weknora / FastGPT | 文档解析深度差异化；可与任意平台组合使用 |
+| 统一模型接入、配额、成本核算与虚拟 Key | LiteLLM | — | 模型网关层标配；与上面任何平台叠加使用，不存在二选一 |
+| Agent 要真干活：执行代码、操作工具、跑长任务 | Codex App Server / OpenHands | OpenAI Agents SDK（自行组装） | harness+沙箱+审批是核心能力；注意 OpenHands 认证在企业版 |
+| 企业内部多用户 Agent 平台：门户+按人分配资源+配额+审批+审计，数据自托管 | LuBanAgent | MultiUserClaw / YC-QM（轻量自用） | 治理四件套+门户/分配/动态装配/主体配额开箱即用；Tool 受治理，风险低于 free-shell 类方案 |
+| 多 Agent 协作的框架级研发 | AgentScope / Mastra | OpenAI Agents SDK / pi | 提供原语和理念参考，门户与治理需要自建 |
+| 要跑不可信代码/插件，安全隔离要求高 | E2B / OpenSandbox | K8s 会话 Pod / Bwrap | 沙箱是组件不是平台，可与上面任意方案组合 |
+| Agent 在员工本机执行（桌面端优先） | WorkBuddy / QwenPaw | Cherry Studio 模式自建 | 本机执行天然隔离，无需服务端沙箱 |
+
+三条选型原则：
+
+1. **先问要不要跑真实任务**：只要问答选门户类（Open WebUI/LibreChat）；要执行选基座/harness 类（LuBanAgent/Codex/OpenHands）。
+2. **再问谁来用**：开发者自用选 SDK/框架足够；全员使用必须有门户、权限与配额治理。
+3. **组件可组合**：LiteLLM（网关）+ E2B（沙箱）+ 任一平台是常见叠加，不必整栈二选一。
+
+LuBanAgent 的适用边界：当"数据自托管 + 真实任务执行 + 企业级治理（分配/配额/审批/审计）"三个都要时，它是最省事的开箱方案；只要其中一样（比如纯问答门户），用更轻的工具更合适。
 
 <div v-if="lightbox" class="lightbox" @click="closeLightbox">
 <img :src="lightbox" alt="架构图放大视图" />
