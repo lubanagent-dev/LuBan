@@ -79,6 +79,9 @@ def create_app(*, ui_dist: Path | None = None) -> FastAPI:
     # （api → skill 为分层禁忌，路由不 import skill 模块）
     app.state.skill_registry = skill_registry
     app.state.cs_team = build_cs_team()
+    # supervisor key → Team：聊天运行通道（/v1/agents/{key}/runs）据此把 supervisor
+    # 的请求自动改走团队编排，避免调度协议 JSON 原样透给终端用户。
+    app.state.team_supervisors = {app.state.cs_team.supervisor_key: app.state.cs_team}
 
     return app
 

@@ -3,6 +3,7 @@
 import logging
 import uuid
 from collections.abc import AsyncIterator
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Query, Request
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -11,9 +12,10 @@ from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, System
 from lubanagent.api.agent_visibility import ensure_agent_visible
 from lubanagent.api.deps import CtxDep
 from lubanagent.api.schemas import ErrorOut, RunCreateRequest
-from lubanagent.core import ErrorCode, LubanError, Run, RunStatus, TraceEvent
+from lubanagent.core import ErrorCode, LubanError, Run, RunStatus, TraceEvent, TraceEventType
 from lubanagent.core.log_context import update_log_context
 from lubanagent.extension import Principal
+from lubanagent.multiagent import Team, TeamRunner
 from lubanagent.persistence import RunRepository, SessionRepository
 from lubanagent.persistence.repositories.quota import QuotaRepository
 from lubanagent.runtime import RunRequest, sse_stream
@@ -86,6 +88,72 @@ async def _persist_turn_messages(
         logger.warning("会话 %s 落库本轮消息失败（run=%s）", session_id, run_id, exc_info=True)
 
 
+def _team_for_key(http_request: Request, key: str) -> Team | None:
+    """supervisor key → Team（app/main.py 装配期注册）；未注册返回 None。"""
+    mapping = getattr(http_request.app.state, "team_supervisors", None) or {}
+    team = mapping.get(key)
+    return team if isinstance(team, Team) else None
+
+
+def _team_event(run_id: str, event_type: TraceEventType, payload: dict) -> TraceEvent:
+    """团队编排路径的合成 SSE 事件（与 runtime 事件同形，前端零改动）。"""
+    return TraceEvent(
+        id=f"evt-{uuid.uuid4().hex}",
+        run_id=run_id,
+        type=event_type,
+        payload=payload,
+        created_at=datetime.now(tz=UTC),
+    )
+
+
+async def _stream_team_run(
+    ctx: CtxDep, team: Team, request: RunRequest, run_id: str
+) -> AsyncIterator[TraceEvent]:
+    """supervisor 命中已注册团队 → 走 TeamRunner 编排，剥掉调度协议 JSON 只回最终答复。
+
+    编排 Run 由 GraphRunner 按 (graph key, thread) 自行落库；本路径合成
+    run_started → run_completed/run_failed 事件流，前端按普通 Run 消费。
+    门户会话消息由本函数直接落库（编排 Run id 与对外 run_id 不同，不能复用
+    _persist_turn_messages 的 Run 反查）。
+    """
+    yield _team_event(run_id, TraceEventType.RUN_STARTED, {"agent_key": f"team:{team.name}"})
+    try:
+        runner = TeamRunner(db=ctx.db, runtime=ctx.runtime, registry=ctx.registry)
+        result = await runner.run(team, request.user_input, thread_id=request.session_id)
+        state = result.output if isinstance(result.output, dict) else {}
+        output = str(state.get("final_output") or "")
+        if not output:
+            raise LubanError(ErrorCode.INTERNAL_ERROR, "团队编排未产出最终答复")
+        yield _team_event(
+            run_id,
+            TraceEventType.RUN_COMPLETED,
+            {"output": output, "status": "completed", "end_reason": "final_answer"},
+        )
+    except Exception as exc:
+        yield _team_event(
+            run_id,
+            TraceEventType.RUN_FAILED,
+            {
+                "status": "failed",
+                "error": {"code": "TEAM_RUN_FAILED", "message": str(exc)},
+            },
+        )
+        return
+    if request.session_id:
+        try:
+            async with ctx.db.session() as session:
+                session_repo = SessionRepository(session)
+                if await session_repo.get_session(request.session_id) is not None:
+                    await session_repo.append_message(
+                        request.session_id, "user", request.user_input
+                    )
+                    await session_repo.append_message(request.session_id, "assistant", output)
+        except Exception:
+            logger.warning(
+                "会话 %s 团队轮次落库失败（run=%s）", request.session_id, run_id, exc_info=True
+            )
+
+
 @router.post("/agents/{key}/runs")
 async def create_run(key: str, body: RunCreateRequest, ctx: CtxDep, http_request: Request):
     run_id = uuid.uuid4().hex
@@ -125,7 +193,12 @@ async def create_run(key: str, body: RunCreateRequest, ctx: CtxDep, http_request
         request_id=getattr(http_request.state, "request_id", None),
         subject=getattr(principal, "subject", None),
     )
-    stream = ctx.runtime.stream(request)
+    team = _team_for_key(http_request, key)
+    stream = (
+        _stream_team_run(ctx, team, request, run_id)
+        if team is not None
+        else ctx.runtime.stream(request)
+    )
     # 预热首事件：定义加载/可运行性失败（404/422）在流开始前抛出，走统一错误映射
     first: TraceEvent | None = None
     try:

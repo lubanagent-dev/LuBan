@@ -5881,6 +5881,23 @@
           },
           {
             "in": "query",
+            "name": "exclude_logger",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 1000,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Exclude Logger"
+            }
+          },
+          {
+            "in": "query",
             "name": "q",
             "required": false,
             "schema": {
