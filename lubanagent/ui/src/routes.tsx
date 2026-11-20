@@ -1,8 +1,9 @@
-import { createBrowserRouter, Navigate, type RouteObject } from 'react-router-dom';
+import { createBrowserRouter, Navigate, type RouteObject, useParams } from 'react-router-dom';
 
 import { AppShell } from '@/components/layout/app-shell';
 import AssignmentsPage from '@/pages/assignments/AssignmentsPage';
 import AuditEventsPage from '@/pages/audit/AuditEventsPage';
+import QuotasPage from '@/pages/quotas/QuotasPage';
 import PortalLoginPage from '@/pages/portal/PortalLoginPage';
 import AgentDebugPage from '@/pages/agents/AgentDebugPage';
 import AgentEditorPage from '@/pages/agents/AgentEditorPage';
@@ -19,17 +20,24 @@ import PromptsPage from '@/pages/prompts/PromptsPage';
 import SecurityPage from '@/pages/security/SecurityPage';
 import SkillsPage from '@/pages/skills/SkillsPage';
 import ToolsPage from '@/pages/tools/ToolsPage';
-import TraceDetailPage from '@/pages/traces/TraceDetailPage';
-import TracesPage from '@/pages/traces/TracesPage';
 import { RequirePermission } from '@/components/layout/require-permission';
+import { RouteErrorBoundary } from '@/components/layout/route-error-boundary';
+import { RootRedirect } from '@/components/layout/root-redirect';
 
 /** 路由表 = 验收单位（17 条页面路由，其中 /chat 用户端聊天页为并列路由、不在 AppShell 布局壳内；D4-1 契约存档为旧清单，以此为准）；测试复用同一份 routeObjects */
+/** Traces 已并入日志排查（/diagnostics）；旧链接 302 到对应位置。 */
+function TracesRedirect() {
+  const { runId } = useParams();
+  return <Navigate to={runId ? `/diagnostics/${runId}` : '/diagnostics'} replace />;
+}
+
 export const routeObjects: RouteObject[] = [
   {
     path: '/',
     element: <AppShell />,
+    errorElement: <RouteErrorBoundary />,
     children: [
-      { index: true, element: <Navigate to="/agents" replace /> },
+      { index: true, element: <RootRedirect /> },
       {
         path: 'agents',
         element: (
@@ -114,7 +122,7 @@ export const routeObjects: RouteObject[] = [
         path: 'traces',
         element: (
           <RequirePermission permission="run:read">
-            <TracesPage />
+            <Navigate to="/diagnostics" replace />
           </RequirePermission>
         ),
       },
@@ -122,7 +130,7 @@ export const routeObjects: RouteObject[] = [
         path: 'traces/:runId',
         element: (
           <RequirePermission permission="run:read">
-            <TraceDetailPage />
+            <TracesRedirect />
           </RequirePermission>
         ),
       },
@@ -167,6 +175,14 @@ export const routeObjects: RouteObject[] = [
         ),
       },
       {
+        path: 'quotas',
+        element: (
+          <RequirePermission permission="security:manage">
+            <QuotasPage />
+          </RequirePermission>
+        ),
+      },
+      {
         path: 'audit-events',
         element: (
           <RequirePermission permission="audit:read">
@@ -174,13 +190,15 @@ export const routeObjects: RouteObject[] = [
           </RequirePermission>
         ),
       },
-      { path: '*', element: <Navigate to="/agents" replace /> },
+      { path: '*', element: <RootRedirect /> },
     ],
   },
   // 用户端聊天页：并列路由（无侧边栏/顶栏的全屏聊天；带门户令牌时启用会话侧栏）
-  { path: '/chat', element: <ChatPage /> },
+  { path: '/chat', element: <ChatPage />, errorElement: <RouteErrorBoundary /> },
   // 门户登录/注册页（R7）：终端用户入口，独立于工作台鉴权
-  { path: '/portal', element: <PortalLoginPage /> },
+  { path: '/portal', element: <PortalLoginPage />, errorElement: <RouteErrorBoundary /> },
+  // 门户首页即对话页（Codex 式：侧栏智能体 + 会话，主区聊天）
+  { path: '/portal/app', element: <Navigate to="/chat" replace />, errorElement: <RouteErrorBoundary /> },
 ];
 
 export const router = createBrowserRouter(routeObjects);

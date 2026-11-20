@@ -32,7 +32,6 @@ describe('布局壳', () => {
       'Skills',
       '知识库',
       '流程图',
-      'Traces',
       '日志排查',
       '评测',
       '用户权限',
@@ -44,9 +43,9 @@ describe('布局壳', () => {
     expect(await screen.findByText('live')).toBeInTheDocument();
   });
 
-  it('/ 重定向到 /agents', async () => {
+  it('/ 未登录时重定向到门户登录页', async () => {
     renderAt('/');
-    expect(await screen.findByText('Agent 列表')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'LubanAgent 门户' })).toBeInTheDocument();
   });
 });
 
@@ -63,14 +62,15 @@ describe('20 条页面路由均可达', () => {
     ['/skills', 'Skill 管理'],
     ['/knowledge', '知识库'],
     ['/graphs', '流程图'],
-    ['/traces', 'Trace 列表'],
-    ['/traces/run-0001', 'Trace 回放'],
+    ['/traces', '日志排查'],
+    ['/traces/run-0001', '对话排查详情'],
     ['/evals', '评测报告'],
     ['/diagnostics', '日志排查'],
     ['/diagnostics/run-0001', '对话排查详情'],
     ['/security', '用户与角色'],
-    ['/assignments', '资源分配（R8）'],
-    ['/audit-events', '审计事件（R9）'],
+    ['/assignments', '资源分配'],
+    ['/quotas', '主体配额'],
+    ['/audit-events', '审计事件'],
     ['/portal', 'LubanAgent 门户'],
   ];
 

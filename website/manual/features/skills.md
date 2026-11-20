@@ -2,6 +2,14 @@
 
 > 本页讲 Agent Skills 开放标准（SKILL.md）、渐进披露三档加载、Skill / Tool / MCP 的分工、两种装载方式与分配到 Agent 的做法，以及治理边界。
 
+## 页面入口与代码位置
+
+| 在哪用（工作台页面） | 代码在哪 |
+| --- | --- |
+| 左侧「Skills」（`/skills`）：上传、版本、分配 | 自带 Skill 包在 `app/skills/`；加载与沙箱在 `lubanagent/skill/` |
+
+![Skills 页面](../images/workbench/skills.png)
+
 ## Skill 是什么（官方定义）
 
 Agent Skills 是 Anthropic 2025 年 10 月发布、随后作为**开放标准**放开的格式（[agentskills.io](https://agentskills.io)，[Anthropic 公告](https://www.anthropic.com/news/skills)）。官方定义："一个轻量、开放的格式，用专业知识与工作流扩展 Agent 能力。核心是一个装有 SKILL.md 的文件夹——元数据（至少 name 和 description）+ 告诉 Agent 如何完成某类任务的指令；还可以打包脚本、参考资料、模板等资源。"

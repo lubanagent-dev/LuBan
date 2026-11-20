@@ -19,12 +19,22 @@ function renderSecurity() {
   );
 }
 
-describe('用户权限页', () => {
-  it('展示用户、角色和权限点；admin 保持受保护', async () => {
+async function openRolesTab(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByTestId('security-tab-roles'));
+  await screen.findByTestId('security-role-detail');
+}
+
+describe('用户与角色页（RBAC 管理端）', () => {
+  it('用户列表与角色权限矩阵分开两个 Tab；admin 保持受保护', async () => {
+    const user = userEvent.setup();
     renderSecurity();
     expect(await screen.findByText('Alice')).toBeInTheDocument();
     expect(screen.getByTestId('security-user-bob')).toBeInTheDocument();
+
+    await openRolesTab(user);
     expect(screen.getByTestId('security-role-admin')).toBeInTheDocument();
+    // 默认选中第一个角色（admin），右侧权限矩阵中 admin 权限点禁用。
+    expect(screen.getByTestId('security-role-detail')).toHaveTextContent('管理员');
     const adminPermission = document.querySelector<HTMLInputElement>(
       '#role-admin-security\\:manage',
     );
@@ -32,21 +42,37 @@ describe('用户权限页', () => {
     expect(adminPermission).toBeDisabled();
   });
 
-  it('新建用户并分配角色', async () => {
+  it('新建用户走弹窗并分配初始角色', async () => {
     const user = userEvent.setup();
     renderSecurity();
     expect(await screen.findByText('Alice')).toBeInTheDocument();
 
+    await user.click(screen.getByTestId('security-open-create-user'));
+    await screen.findByTestId('create-user-dialog');
     await user.type(screen.getByLabelText('用户名'), 'carol');
     await user.type(screen.getByLabelText('显示名'), 'Carol');
     await user.type(screen.getByLabelText('初始密码'), 'secret123');
     const viewerCheckbox = document.querySelector<HTMLInputElement>('#new-user-role-viewer');
     expect(viewerCheckbox).not.toBeNull();
     await user.click(viewerCheckbox!);
-    await user.click(screen.getByRole('button', { name: '新建用户' }));
+    await user.click(screen.getByTestId('create-user-submit'));
 
     expect(await screen.findByTestId('security-user-carol')).toBeInTheDocument();
     expect(screen.getByTestId('security-user-carol')).toHaveTextContent('Carol');
+    expect(screen.queryByTestId('create-user-dialog')).not.toBeInTheDocument();
+  });
+
+  it('搜索框按用户名/显示名过滤用户列表', async () => {
+    const user = userEvent.setup();
+    renderSecurity();
+    expect(await screen.findByTestId('security-user-alice')).toBeInTheDocument();
+
+    await user.type(screen.getByTestId('security-user-search'), 'bob');
+    expect(screen.queryByTestId('security-user-alice')).not.toBeInTheDocument();
+    expect(screen.getByTestId('security-user-bob')).toBeInTheDocument();
+
+    await user.clear(screen.getByTestId('security-user-search'));
+    expect(screen.getByTestId('security-user-alice')).toBeInTheDocument();
   });
 
   it('用户读取失败时显示错误，而不是让用户表看起来是空列表', async () => {
@@ -100,7 +126,7 @@ describe('用户权限页', () => {
     expect(screen.queryByTestId('reset-password-dialog')).not.toBeInTheDocument();
   });
 
-  it('同一用户的角色勾选请求未完成前禁用，避免快速点击造成旧 props 竞态', async () => {
+  it('编辑用户角色走弹窗；请求未完成前禁用，避免快速点击竞态', async () => {
     const user = userEvent.setup();
     let patchCalls = 0;
     server.use(
@@ -113,6 +139,9 @@ describe('用户权限页', () => {
     renderSecurity();
     expect(await screen.findByTestId('security-user-bob')).toBeInTheDocument();
 
+    await user.click(screen.getByTestId('security-edit-roles-bob'));
+    await screen.findByTestId('user-roles-dialog');
+
     const checkbox = document.querySelector<HTMLInputElement>('#user-u-operator-role-viewer');
     expect(checkbox).not.toBeNull();
     await user.click(checkbox!);
@@ -123,7 +152,7 @@ describe('用户权限页', () => {
     expect(patchCalls).toBe(1);
   });
 
-  it('角色权限变更后刷新 access/me，让当前账号 UI 权限同步', async () => {
+  it('选中角色后编辑权限矩阵；变更后刷新 access/me 同步 UI 权限', async () => {
     const user = userEvent.setup();
     let meCalls = 0;
     let rolePatch: Record<string, unknown> | null = null;
@@ -153,10 +182,16 @@ describe('用户权限页', () => {
       }),
     );
     renderSecurity();
-    const operatorCard = await screen.findByTestId('security-role-operator');
-    expect(meCalls).toBeGreaterThan(0);
+    expect(await screen.findByText('Alice')).toBeInTheDocument();
+    await openRolesTab(user);
 
-    await user.click(within(operatorCard).getByLabelText('修改配置（config:write）'));
+    // 默认选中 admin；切换到 operator 后编辑其权限。
+    await user.click(screen.getByTestId('security-role-operator'));
+    expect(screen.getByTestId('security-role-detail')).toHaveTextContent('操作员');
+
+    await user.click(
+      within(screen.getByTestId('security-role-detail')).getByLabelText('修改配置（config:write）'),
+    );
 
     await waitFor(() => expect(rolePatch).not.toBeNull());
     expect(rolePatch).toMatchObject({ name: '操作员' });

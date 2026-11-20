@@ -1,7 +1,8 @@
 """Agent 定义路由：CRUD 与不可变版本快照。"""
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
+from lubanagent.api.agent_visibility import ensure_agent_visible, filter_visible_agents
 from lubanagent.api.deps import CtxDep
 from lubanagent.api.errors import conflict_response
 from lubanagent.core import AgentDefinition, AgentVersion, ErrorCode, LubanError
@@ -11,9 +12,16 @@ router = APIRouter(tags=["agents"])
 
 
 @router.get("/agents", response_model=list[AgentDefinition])
-async def list_agents(ctx: CtxDep) -> list[AgentDefinition]:
+async def list_agents(ctx: CtxDep, request: Request) -> list[AgentDefinition]:
     async with ctx.db.session() as session:
-        return await AgentRepository(session).list_agents()
+        definitions = await AgentRepository(session).list_agents()
+    return await filter_visible_agents(
+        ctx,
+        getattr(request.state, "principal", None),
+        definitions,
+        ctx.settings,
+        ctx.db,
+    )
 
 
 @router.post("/agents", response_model=AgentDefinition, status_code=201)
@@ -30,13 +38,20 @@ async def create_agent(definition: AgentDefinition, ctx: CtxDep):
 
 
 @router.get("/agents/{key}", response_model=AgentDefinition)
-async def get_agent(key: str, ctx: CtxDep) -> AgentDefinition:
+async def get_agent(key: str, ctx: CtxDep, request: Request) -> AgentDefinition:
     async with ctx.db.session() as session:
         definition = await AgentRepository(session).get_agent(key)
     if definition is None:
         raise LubanError(
             ErrorCode.AGENT_NOT_FOUND, f"Agent 不存在: {key}", details={"agent_key": key}
         )
+    await ensure_agent_visible(
+        ctx,
+        getattr(request.state, "principal", None),
+        key,
+        ctx.settings,
+        ctx.db,
+    )
     return definition
 
 

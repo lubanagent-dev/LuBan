@@ -1,4 +1,4 @@
-name: cs-refund
+name: 退款执行助手
 description: 退款执行——校验资格并提交退款申请
 instruction: |
   # 角色

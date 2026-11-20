@@ -1,7 +1,7 @@
 # 教学要点：vision 逻辑槽位（多模态输入 io_contract.input: multimodal，模型须声明
 # vision 能力才可绑定）+ 图文混合输入与 RAG 组合——看图识别商品，再用知识库查规格
 # 作答，回答仍受防错答守门约束（低于阈值丢弃 + 全 miss 短路拒答）。
-name: product-visual
+name: 商品图片助手
 description: 商品图片问询助手——看图识别商品，结合知识库回答规格与使用问题
 instruction: |
   # 角色

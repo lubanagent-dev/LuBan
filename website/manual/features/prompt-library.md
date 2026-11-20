@@ -2,6 +2,14 @@
 
 > 本页讲 Agent 系统提示词的两种写法——内嵌与引用 Prompt 库，以及引用的三条容易踩的语义。Prompt 库页面操作见[开发者工作台](./workbench.md)。
 
+## 页面入口与代码位置
+
+| 在哪用（工作台页面） | 代码在哪 |
+| --- | --- |
+| 左侧「Prompt 库」（`/prompts`）：新建、编辑发版、版本历史、分配给 Agent | 页面代码在 `lubanagent/ui/src/pages/prompts/`；Prompt 数据存数据库（表结构见 `lubanagent/persistence/`） |
+
+![Prompt 库页面](../images/workbench/prompts.png)
+
 Agent 的指令（系统 Prompt）有两种写法，可以随时切换：
 
 - **内嵌**（默认）：直接把 Prompt 写在定义的 `instructions` 字段里。YAML 一次性导入的 Agent 就是这种；存量 Agent 与 YAML 导入的行为完全不变。

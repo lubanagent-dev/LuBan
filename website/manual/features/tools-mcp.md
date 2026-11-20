@@ -2,6 +2,14 @@
 
 > 本页讲业务工具（Python Tool）、MCP 官方定义、MCP Client 接入外部工具生态、MCP Server 反向暴露自有工具，以及工具治理链路。
 
+## 页面入口与代码位置
+
+| 在哪用（工作台页面） | 代码在哪 |
+| --- | --- |
+| 左侧「工具」（`/tools`）：列表与在线测试 | 业务工具写 `app/tools/`；工具执行与审批闸门在 `lubanagent/tool/`；MCP Client/Server 在 `lubanagent/mcp/` |
+
+![工具页面](../images/workbench/tools.png)
+
 ## Python Tool——业务动作唯一要写代码的地方
 
 **是什么**：Tool 就是一段 Python 函数，加三样声明：自然语言描述（给模型看）、参数 JSON Schema（给模型填）、治理属性（权限、是否高风险、超时/重试/幂等）。

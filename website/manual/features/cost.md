@@ -2,6 +2,14 @@
 
 > 本页讲 KV-cache 友好不变量、Token 估算、Run 级预算熔断，以及费用公式与单价字段的配置。
 
+## 页面入口与代码位置
+
+| 在哪用（工作台页面） | 代码在哪 |
+| --- | --- |
+| 左侧「Traces」（`/traces`）看单次 Run 的 Token 与费用；「分配与配额」（`/assignments`）配置主体配额 | 预算熔断在 `lubanagent/runtime/`（Run 边界）；费用记录与归集在 `lubanagent/observability/` |
+
+![Traces 页面](../images/workbench/traces.png)
+
 **是什么**：上下文组装保证 KV-cache 友好不变量（稳定前缀、append-only，命中效果取决于厂商缓存语义）；Token 估算前置（近似值，调用前知道大概花多少）；Run 级预算与超限熔断（撞线即停，写进 Trace）；按 Agent/会话/天归集的费用报表与优化建议。
 
 **为什么需要**：成本失控是真实账单事故（重试静默烧钱、上下文无限增长）；成本必须可治理在事前与事中，不是事后算账。

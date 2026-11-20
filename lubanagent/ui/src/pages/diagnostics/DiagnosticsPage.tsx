@@ -42,6 +42,9 @@ const EMPTY_FILTER = {
   to_time: '',
 };
 
+/** HTTP 访问流水（请求开始/结束）默认排除：量大且对排查价值低，可一键关掉。 */
+const HTTP_NOISE_LOGGER = 'lubanagent.api.requests';
+
 const LEVEL_CLASS: Record<LogEntry['level'], string> = {
   DEBUG: 'text-slate-500',
   INFO: 'text-emerald-500',
@@ -71,6 +74,7 @@ export default function DiagnosticsPage() {
   const [runPage, setRunPage] = useState(0);
   const [logPage, setLogPage] = useState(0);
   const [timeError, setTimeError] = useState('');
+  const [hideHttpNoise, setHideHttpNoise] = useState(true);
   const pageSize = 20;
 
   const { session_id, run_id, trace_id, user_id, status, request_id, logger, q } = filter;
@@ -95,6 +99,7 @@ export default function DiagnosticsPage() {
     level: filter.level === 'all' ? undefined : filter.level,
     from_time: fromTime,
     to_time: toTime,
+    exclude_logger: hideHttpNoise ? HTTP_NOISE_LOGGER : undefined,
     limit: pageSize,
     offset: logPage * pageSize,
   });
@@ -307,6 +312,18 @@ export default function DiagnosticsPage() {
           </div>
         </TabsContent>
         <TabsContent value="logs" className="space-y-3">
+          <label className="flex w-fit cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+            <input
+              type="checkbox"
+              data-testid="diag-hide-http-noise"
+              checked={hideHttpNoise}
+              onChange={(event) => {
+                setHideHttpNoise(event.target.checked);
+                setLogPage(0);
+              }}
+            />
+            {t('diag.hideHttpNoise')}
+          </label>
           {logsQuery.data && (logsQuery.data.dropped_count || logsQuery.data.write_failures) ? (
             <p className="text-xs text-amber-500">
               {t('diag.droppedNotice')

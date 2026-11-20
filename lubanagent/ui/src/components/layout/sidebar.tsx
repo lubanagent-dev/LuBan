@@ -2,6 +2,8 @@ import {
   BookOpen,
   ClipboardList,
   Bot,
+  ChevronDown,
+  ChevronRight,
   FileText,
   Gauge,
   GitBranch,
@@ -9,14 +11,14 @@ import {
   MessagesSquare,
   Package,
   SearchCode,
-  ScrollText,
   ShieldCheck,
   ShieldAlert,
   Terminal,
   Wrench,
 } from 'lucide-react';
 import type { ComponentType } from 'react';
-import { NavLink } from 'react-router-dom';
+import { useState } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 
 import { useAgents } from '@/api/hooks';
 import { useT } from '@/lib/i18n';
@@ -30,6 +32,7 @@ interface NavItem {
   permission: string;
 }
 
+/** 平铺导航项（主菜单）。 */
 const NAV_ITEMS: NavItem[] = [
   { to: '/agents', labelKey: 'nav.agents', icon: Bot, permission: 'config:read' },
   { to: '/prompts', labelKey: 'nav.prompts', icon: FileText, permission: 'config:read' },
@@ -38,18 +41,48 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/skills', labelKey: 'nav.skills', icon: Package, permission: 'config:read' },
   { to: '/knowledge', labelKey: 'nav.knowledge', icon: BookOpen, permission: 'config:read' },
   { to: '/graphs', labelKey: 'nav.graphs', icon: GitBranch, permission: 'config:read' },
-  { to: '/traces', labelKey: 'nav.traces', icon: ScrollText, permission: 'run:read' },
-  { to: '/diagnostics', labelKey: 'nav.diagnostics', icon: SearchCode, permission: 'diagnostics:read' },
-  { to: '/evals', labelKey: 'nav.evals', icon: MessagesSquare, permission: 'eval:read' },
-  { to: '/security', labelKey: 'nav.security', icon: ShieldCheck, permission: 'security:manage' },
   {
-    to: '/assignments',
-    labelKey: 'nav.assignments',
-    icon: ClipboardList,
-    permission: 'security:manage',
+    to: '/diagnostics',
+    labelKey: 'nav.diagnostics',
+    icon: SearchCode,
+    permission: 'diagnostics:read',
   },
-  { to: '/audit-events', labelKey: 'nav.audit', icon: ShieldAlert, permission: 'audit:read' },
+  { to: '/evals', labelKey: 'nav.evals', icon: MessagesSquare, permission: 'eval:read' },
 ];
+
+/** 可折叠导航组：权限与审计相关页面收进同一组，避免菜单无限变长。 */
+interface NavGroup {
+  labelKey: string;
+  items: NavItem[];
+}
+
+const NAV_GROUPS: NavGroup[] = [
+  {
+    labelKey: 'sidebar.adminGroup',
+    items: [
+      { to: '/security', labelKey: 'nav.security', icon: ShieldCheck, permission: 'security:manage' },
+      {
+        to: '/assignments',
+        labelKey: 'nav.assignments',
+        icon: ClipboardList,
+        permission: 'security:manage',
+      },
+      { to: '/quotas', labelKey: 'nav.quotas', icon: Gauge, permission: 'security:manage' },
+      { to: '/audit-events', labelKey: 'nav.audit', icon: ShieldAlert, permission: 'audit:read' },
+    ],
+  },
+];
+
+/** 分组展开状态记 localStorage；子项激活时强制展开。 */
+const GROUP_OPEN_KEY = 'luban.sidebar.group-open';
+
+function readGroupOpen(): boolean {
+  try {
+    return localStorage.getItem(GROUP_OPEN_KEY) !== 'false';
+  } catch {
+    return true;
+  }
+}
 
 function navLinkClass({ isActive }: { isActive: boolean }) {
   return cn(
@@ -65,8 +98,20 @@ export function Sidebar() {
   const { data: agents } = useAgents();
   const t = useT();
   const { can } = usePermissions();
+  const location = useLocation();
   const debugTarget = agents?.length ? `/agents/${agents[0].key}/debug` : '/agents';
   const navItems = NAV_ITEMS.filter((item) => can(item.permission));
+  const [groupOpen, setGroupOpen] = useState(readGroupOpen);
+
+  const toggleGroup = () => {
+    const next = !groupOpen;
+    setGroupOpen(next);
+    try {
+      localStorage.setItem(GROUP_OPEN_KEY, String(next));
+    } catch {
+      // localStorage 不可用（隐私模式等）时仅在内存中生效。
+    }
+  };
 
   return (
     <aside className="flex w-52 shrink-0 flex-col border-r bg-card/50">
@@ -92,6 +137,43 @@ export function Sidebar() {
             {t(item.labelKey)}
           </NavLink>
         ))}
+        {NAV_GROUPS.map((group) => {
+          const items = group.items.filter((item) => can(item.permission));
+          if (items.length === 0) return null;
+          const hasActive = items.some((item) => location.pathname.startsWith(item.to));
+          const open = groupOpen || hasActive;
+          return (
+            <div key={group.labelKey} className="pt-2">
+              <button
+                type="button"
+                onClick={toggleGroup}
+                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent/50 hover:text-accent-foreground"
+                data-testid="sidebar-admin-group"
+              >
+                {open ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+                {t(group.labelKey)}
+              </button>
+              {open && (
+                <div className="ml-3 space-y-1 border-l pl-2">
+                  {items.map((item) => (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      className={({ isActive }) => cn(navLinkClass({ isActive }), 'text-sm')}
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {t(item.labelKey)}
+                    </NavLink>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </nav>
     </aside>
   );

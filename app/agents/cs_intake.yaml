@@ -1,7 +1,7 @@
 # 教学要点：结构化输出（io_contract.output 是 JSON Schema，模型须声明 structured_output
 # 能力才可绑定）+ 无状态单轮（memory: none，每次调用独立）+ 槽位降级链（cheap → fast）。
 # 适合放在对话链路前道：把用户消息归档成结构化工单，供工单系统/人工流转。
-name: cs-intake
+name: 工单预分类助手
 description: 工单预分类器——把用户消息归档为结构化工单（分类/紧急度/摘要/关联单号）
 instruction: |
   # 角色

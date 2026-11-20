@@ -1,19 +1,18 @@
 /**
- * /chat 用户端聊天页（示例级入口，不在 AppShell 布局壳内）：
- * 无侧边栏全屏聊天，面向最终用户——选 Agent、多轮对话（流式）、
- * 工具调用显示为状态行、大额操作页内审批、终态后 markdown 渲染。
- * 定位边界：不做用户注册/登录/会话列表持久化；生产用户端由业务系统自建走 REST/SSE。
+ * /chat 用户端聊天页：非门户模式 = 示例级全屏聊天（不 persist）；
+ * 门户模式（R7，登录用户）= Codex 式布局——左侧栏（智能体/会话/文件）+ 主区聊天。
+ * 多轮流式、工具状态行、页内审批、markdown 渲染两种模式共用。
  * 鉴权（H13）：请求自动携带工作台内存态 API Key（见 lib/auth.ts；AUTH_ENABLED=false 时无需提供）。
  */
 
-import { ArrowLeft, MessageCircle, PanelLeft, RotateCcw, Send, Square } from 'lucide-react';
+import { ArrowLeft, MessageCircle, RotateCcw, Send, Square } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 import { useQueryClient } from '@tanstack/react-query';
 
 import { useCreateSession, useSessionMessages } from '@/api/hooks';
-import { clearPortalSession, getPortalToken } from '@/lib/portal';
+import { getPortalToken } from '@/lib/portal';
 
 import { API_BASE } from '@/api/client';
 import { useAgents, useCancelRun, useDecideApproval } from '@/api/hooks';
@@ -33,6 +32,7 @@ import type { SseEvent } from '@/lib/sse';
 import { useRunStream } from '@/lib/sse';
 
 import { AssistantBubble } from './components/AssistantBubble';
+import { MarkdownMessage } from './components/MarkdownMessage';
 import { SessionSidebar } from './components/SessionSidebar';
 
 interface ArchivedTurn {
@@ -59,9 +59,21 @@ export default function ChatPage() {
 
   // 门户模式（R7）：带门户令牌 → 会话侧栏 + 消息持久化归因；否则维持示例级入口语义。
   const portalMode = getPortalToken() !== null;
-  const [sidebarOpen, setSidebarOpen] = useState(portalMode);
   const [activeSession, setActiveSession] = useState<{ id: string; title: string } | null>(null);
   const portalHistory = useSessionMessages(portalMode ? activeSession?.id ?? null : null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // 门户首页入口参数（R7）：?agent=<key> 直接选中智能体开新对话；?session=<id> 继续历史会话。
+  // 仅挂载时消费一次，消费后清掉参数（刷新不重复跳转）。
+  useEffect(() => {
+    if (getPortalToken() === null) return;
+    const agent = searchParams.get('agent');
+    const session = searchParams.get('session');
+    if (agent !== null) setSelectedKey(agent);
+    if (session !== null) setActiveSession({ id: session, title: '' });
+    if (agent !== null || session !== null) setSearchParams({}, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 仅挂载时消费一次入口参数
+  }, []);
 
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [input, setInput] = useState('');
@@ -172,73 +184,64 @@ export default function ChatPage() {
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
-      <header className="flex h-14 shrink-0 items-center gap-3 border-b px-4">
-        <MessageCircle className="h-5 w-5 shrink-0 text-primary" />
-        <h1 className="shrink-0 text-xl font-semibold">{t('chat.title')}</h1>
+      <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+        {selectedAgent !== null ? (
+          <>
+            <MessageCircle className="h-4 w-4 shrink-0 text-primary" />
+            <h1 className="shrink-0 text-sm font-medium">{selectedAgent.name}</h1>
+            {selectedAgent.description !== '' && (
+              <p className="hidden min-w-0 flex-1 truncate text-xs text-muted-foreground md:block">
+                {selectedAgent.description}
+              </p>
+            )}
+          </>
+        ) : (
+          <h1 className="shrink-0 text-sm font-medium">{t('chat.title')}</h1>
+        )}
         <div className="ml-auto flex min-w-0 items-center justify-end gap-2">
-          {portalMode && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="shrink-0"
-              aria-label={t('portal.toggleSidebar')}
-              onClick={() => setSidebarOpen((open) => !open)}
-            >
-              <PanelLeft className="h-4 w-4" />
-            </Button>
+          {!portalMode && (
+            <>
+              <Select
+                value={effectiveKey ?? undefined}
+                onValueChange={(value) => {
+                  if (value !== effectiveKey) {
+                    // 切 Agent = 重置会话（防跨 Agent 历史污染）
+                    setSelectedKey(value);
+                    newSession();
+                  }
+                }}
+              >
+                <SelectTrigger className="h-9 w-44 sm:w-56" aria-label={t('chat.selectAgent')}>
+                  <SelectValue
+                    placeholder={agentsQuery.isLoading ? t('common.loading') : t('chat.selectAgent')}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {agents.map((agent) => (
+                    <SelectItem key={agent.key} value={agent.key}>
+                      {agent.name}（{agent.key}）
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={newSession}
+                disabled={inputLocked}
+                className="shrink-0"
+              >
+                <RotateCcw className="mr-1 h-4 w-4" />
+                <span className="hidden sm:inline">{t('chat.newSession')}</span>
+              </Button>
+            </>
           )}
-          <Select
-            value={effectiveKey ?? undefined}
-            onValueChange={(value) => {
-              if (value !== effectiveKey) {
-                // 切 Agent = 重置会话（防跨 Agent 历史污染）
-                setSelectedKey(value);
-                newSession();
-              }
-            }}
-          >
-            <SelectTrigger className="h-9 w-44 sm:w-56" aria-label={t('chat.selectAgent')}>
-              <SelectValue
-                placeholder={agentsQuery.isLoading ? t('common.loading') : t('chat.selectAgent')}
-              />
-            </SelectTrigger>
-            <SelectContent>
-              {agents.map((agent) => (
-                <SelectItem key={agent.key} value={agent.key}>
-                  {agent.name}（{agent.key}）
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={newSession}
-            disabled={inputLocked}
-            className="shrink-0"
-          >
-            <RotateCcw className="mr-1 h-4 w-4" />
-            <span className="hidden sm:inline">{t('chat.newSession')}</span>
-          </Button>
           {!portalMode && (
             <Button variant="ghost" size="sm" asChild className="shrink-0">
               <Link to="/agents">
                 <ArrowLeft className="mr-1 h-4 w-4" />
                 <span className="hidden sm:inline">{t('chat.backToWorkbench')}</span>
               </Link>
-            </Button>
-          )}
-          {portalMode && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="shrink-0"
-              onClick={() => {
-                clearPortalSession();
-                window.location.reload();
-              }}
-            >
-              {t('portal.signOut')}
             </Button>
           )}
           <Button
@@ -256,20 +259,26 @@ export default function ChatPage() {
       </header>
 
       <div className="flex min-h-0 flex-1">
-        {portalMode && sidebarOpen && (
+        {portalMode && (
           <SessionSidebar
             activeSessionId={activeSession?.id ?? null}
+            selectedAgentKey={effectiveKey}
+            onSelectAgent={(key) => {
+              // 切 Agent = 重置会话（防跨 Agent 历史污染）
+              setSelectedKey(key);
+              newSession();
+            }}
+            onNewChat={newSession}
             onSelect={(id, title) => {
               stream.reset();
               setTurns([]);
               setCurrentInput(null);
               setActiveSession({ id, title });
             }}
-            onClose={() => setSidebarOpen(false)}
           />
         )}
-        {/* 关闭时不挂载陪伴区，也不请求形象资源；旧定义默认显示。 */}
-        {selectedAgent?.show_avatar !== false && (
+        {/* 门户模式无陪伴区（侧栏已有智能体列表）；非门户模式保留大头像。 */}
+        {!portalMode && selectedAgent?.show_avatar !== false && (
           <aside
             aria-label={t('chat.avatarAria')}
             className="hidden w-72 shrink-0 items-center justify-center border-r md:flex"
@@ -300,14 +309,17 @@ export default function ChatPage() {
                     ) : (
                       <section key={message.id} className="space-y-2">
                         <div className="flex">
-                          <div className="max-w-[85%] whitespace-pre-wrap rounded-lg bg-muted px-4 py-3 text-sm leading-6">
-                            {message.content}
+                          <div className="max-w-[85%] rounded-lg bg-muted px-4 py-3">
+                            <MarkdownMessage text={message.content} />
                           </div>
                         </div>
                       </section>
                     ),
                   )}
-              {turns.length === 0 && currentInput === null && selectedAgent?.greeting && (
+              {turns.length === 0 &&
+                currentInput === null &&
+                (portalMode ? (portalHistory.data ?? []).length === 0 : true) &&
+                selectedAgent?.greeting && (
                 <div className="flex">
                   <div className="rounded-lg bg-muted px-4 py-3 text-sm leading-6">
                     {selectedAgent.greeting}

@@ -4,9 +4,10 @@ import { ArrowLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
-import { useDiagnosticDetail, useLogs } from '@/api/diagnostics';
+import { useDiagnosticDetail, useDiagnosticRuns, useLogs } from '@/api/diagnostics';
+
 import type { LogEntry } from '@/api/diagnostics';
-import type { Run, TraceOut } from '@/api/hooks';
+import { useSessionMessages, type Run, type TraceOut } from '@/api/hooks';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,6 +34,11 @@ function displayValue(value: unknown): string {
   if (typeof value === 'string') return value;
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
   return JSON.stringify(value, null, 2);
+}
+
+function short(value: string | null | undefined): string {
+  if (!value) return '—';
+  return value.length > 16 ? `${value.slice(0, 14)}…` : value;
 }
 
 /** Run 树单项：默认展开当前 Run，其余收起；展开后显示输入/输出/Error 全量。 */
@@ -125,6 +131,16 @@ export default function DiagnosticDetailPage() {
     { root_run_id: rootRunId, limit: LOG_PAGE_SIZE, offset: logPageIndex * LOG_PAGE_SIZE },
     { enabled: detailQuery.isSuccess && rootRunId !== '' },
   );
+  // 会话聚合（排查入口 = 会话 ID 时看全局）：同会话全部 Run + 完整对话消息。
+  const sessionId = primary?.session_id ?? null;
+  const sessionRunsQuery = useDiagnosticRuns(
+    { session_id: sessionId ?? undefined, limit: 200 },
+  );
+  const sessionMessagesQuery = useSessionMessages(sessionId);
+  const sessionRuns = (sessionRunsQuery.data?.items ?? []).filter(
+    (run) => run.parent_run_id === null,
+  );
+  const sessionMessages = sessionMessagesQuery.data ?? [];
 
   const totalLogs = logsQuery.data?.total ?? 0;
   const totalLogPages = Math.max(1, Math.ceil(totalLogs / LOG_PAGE_SIZE));
@@ -205,6 +221,86 @@ export default function DiagnosticDetailPage() {
           </section>
 
           <section className="space-y-2">
+            {sessionId !== null && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">
+                    {t('diagdetail.sessionContext')
+                      .replace('{runs}', String(sessionRuns.length))
+                      .replace('{messages}', String(sessionMessages.length))}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="rounded border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>{t('diag.col.runTrace')}</TableHead>
+                          <TableHead>{t('diag.col.input')}</TableHead>
+                          <TableHead>{t('diag.col.status')}</TableHead>
+                          <TableHead>{t('diag.col.time')}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {sessionRuns.map((run) => (
+                          <TableRow
+                            key={run.id}
+                            className={
+                              run.id === primary?.id
+                                ? 'bg-accent/40'
+                                : 'cursor-pointer hover:bg-accent/30'
+                            }
+                            onClick={() => {
+                              if (run.id !== primary?.id) {
+                                window.location.assign(
+                                  `/diagnostics/${encodeURIComponent(run.id)}`,
+                                );
+                              }
+                            }}
+                          >
+                            <TableCell className="font-mono text-xs">{short(run.id)}</TableCell>
+                            <TableCell className="max-w-80 truncate">
+                              {String(
+                                (run.input as { user_input?: string } | null)?.user_input ?? '—',
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <RunStatusBadge status={run.status} />
+                            </TableCell>
+                            <TableCell className="text-xs text-muted-foreground">
+                              {formatDateTime(run.created_at)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {sessionRuns.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={4} className="py-4 text-center text-xs text-muted-foreground">
+                              {t('diagdetail.noSessionRuns')}
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  <div className="max-h-96 space-y-2 overflow-y-auto rounded border bg-muted/20 p-3">
+                    {sessionMessages.map((message) => (
+                      <div key={message.id} className="space-y-0.5">
+                        <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                          {message.role}
+                        </span>
+                        <p className="whitespace-pre-wrap break-words text-xs leading-5">
+                          {message.content}
+                        </p>
+                      </div>
+                    ))}
+                    {sessionMessages.length === 0 && (
+                      <p className="text-xs text-muted-foreground">{t('diagdetail.noSessionMessages')}</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <h2 className="text-sm font-medium text-muted-foreground">
               {t('diagdetail.traceTimeline')}
             </h2>

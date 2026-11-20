@@ -1,22 +1,28 @@
 /**
- * /assignments 分配与配额管理页（R8）：给用户/角色授权资源（view/use/manage）+
- * 配置主体配额（token/费用/并发）。权限裁决以后端为准（security:manage），UI 只是体验层。
+ * 资源分配页：给用户/角色授予某个具体资源的 view/use/manage 权限。
+ * 下拉直接读取真实数据（不再手填 ID），列表显示友好名称并分页。
+ * 配额管理拆分到独立页面 /quotas。权限裁决以后端为准，UI 只是体验层。
  */
 
 import { Loader2, Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import {
+  useAgents,
   useAssignments,
-  useDeleteQuota,
   useGrantAssignment,
-  useQuota,
+  useKnowledgeSources,
+  usePrompts,
   useRevokeAssignment,
-  useSetQuota,
+  useSkills,
+  useTools,
 } from '@/api/hooks';
+import { useRoles, useUsers } from '@/api/access';
 import { ApiError } from '@/api/client';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PaginationBar, usePaged } from '@/components/ui/pagination';
 import {
   Select,
   SelectContent,
@@ -35,14 +41,23 @@ import {
 import { useT } from '@/lib/i18n';
 
 const RESOURCE_TYPES = ['agent', 'knowledge', 'skill', 'mcp', 'tool', 'prompt'] as const;
-const GRANTEE_TYPES = ['user', 'role'] as const;
 const PERMS = ['view', 'use', 'manage'] as const;
+
+interface Option {
+  id: string;
+  label: string;
+}
+
+/** 列表展示用：把资源 ID 解析成"友好名 (id)"；解析不到时回退原 ID。 */
+function resourceLabel(type: string, id: string, options: Record<string, Option[]>): string {
+  const hit = options[type]?.find((item) => item.id === id);
+  return hit ? hit.label : id;
+}
 
 export default function AssignmentsPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-10 p-6">
       <AssignmentSection />
-      <QuotaSection />
     </div>
   );
 }
@@ -52,25 +67,73 @@ function AssignmentSection() {
   const assignmentsQuery = useAssignments();
   const grant = useGrantAssignment();
   const revoke = useRevokeAssignment();
-  const [form, setForm] = useState({
-    resource_type: 'knowledge',
-    resource_id: '',
-    grantee_type: 'user',
-    grantee_id: '',
-    perm: 'use',
-  });
+  const agentsQuery = useAgents();
+  const skillsQuery = useSkills();
+  const toolsQuery = useTools();
+  const promptsQuery = usePrompts();
+  const knowledgeQuery = useKnowledgeSources();
+  const usersQuery = useUsers();
+  const rolesQuery = useRoles();
+
+  const [resourceType, setResourceType] = useState<string>('agent');
+  const [resourceId, setResourceId] = useState<string>('');
+  const [granteeType, setGranteeType] = useState<'user' | 'role'>('user');
+  const [granteeId, setGranteeId] = useState<string>('');
+  const [perm, setPerm] = useState<string>('use');
   const [error, setError] = useState<string | null>(null);
 
+  // 各资源类型的真实可选项；mcp 暂无列表接口，保留手填。
+  const resourceOptions: Record<string, Option[]> = useMemo(
+    () => ({
+      agent: (agentsQuery.data ?? []).map((a) => ({ id: a.key, label: `${a.name} (${a.key})` })),
+      knowledge: (knowledgeQuery.data ?? []).map((k) => ({ id: k.name, label: k.name })),
+      skill: (skillsQuery.data ?? []).map((s) => ({ id: s.key, label: s.name || s.key })),
+      mcp: [],
+      tool: (toolsQuery.data ?? []).map((tool) => ({ id: tool.key, label: tool.key })),
+      prompt: (promptsQuery.data ?? []).map((p) => ({ id: p.key, label: p.name || p.key })),
+    }),
+    [agentsQuery.data, knowledgeQuery.data, skillsQuery.data, toolsQuery.data, promptsQuery.data],
+  );
+  const granteeOptions: Option[] = useMemo(() => {
+    if (granteeType === 'user') {
+      return (usersQuery.data ?? []).map((u) => ({
+        id: u.username,
+        label: `${u.display_name} (${u.username})`,
+      }));
+    }
+    return (rolesQuery.data ?? []).map((r) => ({ id: r.key, label: r.name }));
+  }, [granteeType, usersQuery.data, rolesQuery.data]);
+
+  const options = resourceOptions[resourceType] ?? [];
+  const assignments = assignmentsQuery.data ?? [];
+  const {
+    paged: pagedAssignments,
+    page,
+    pageSize,
+    total,
+    totalPages,
+    setPage,
+  } = usePaged(assignments);
+  const effectiveResourceId = resourceId !== '' && options.some((o) => o.id === resourceId)
+    ? resourceId
+    : (options[0]?.id ?? resourceId);
+  const effectiveGranteeId =
+    granteeId !== '' && granteeOptions.some((o) => o.id === granteeId)
+      ? granteeId
+      : (granteeOptions[0]?.id ?? '');
+
   const submit = () => {
-    if (form.resource_id.trim() === '' || form.grantee_id.trim() === '' || grant.isPending) return;
+    if (effectiveResourceId.trim() === '' || effectiveGranteeId.trim() === '' || grant.isPending) {
+      return;
+    }
     setError(null);
     grant.mutate(
       {
-        resource_type: form.resource_type as (typeof RESOURCE_TYPES)[number],
-        resource_id: form.resource_id.trim(),
-        grantee_type: form.grantee_type as (typeof GRANTEE_TYPES)[number],
-        grantee_id: form.grantee_id.trim(),
-        perm: form.perm as (typeof PERMS)[number],
+        resource_type: resourceType as 'agent',
+        resource_id: effectiveResourceId.trim(),
+        grantee_type: granteeType,
+        grantee_id: effectiveGranteeId.trim(),
+        perm: perm as 'view',
       },
       { onError: (exc) => setError(exc instanceof ApiError ? exc.message : t('api.assignFailed')) },
     );
@@ -78,61 +141,95 @@ function AssignmentSection() {
 
   return (
     <section data-testid="assignments-section">
-      <h2 className="mb-4 text-lg font-semibold">{t('assignments.title')}</h2>
+      <h2 className="mb-1 text-lg font-semibold">{t('assignments.title')}</h2>
+      <p className="mb-4 text-sm text-muted-foreground">{t('assignments.desc')}</p>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <Select
-          value={form.resource_type}
-          onValueChange={(value) => setForm((f) => ({ ...f, resource_type: value }))}
+          value={resourceType}
+          onValueChange={(value) => {
+            setResourceType(value);
+            setResourceId('');
+          }}
         >
-          <SelectTrigger className="w-36" aria-label={t('assignments.resourceType')}>
+          <SelectTrigger className="w-32" aria-label={t('assignments.resourceType')}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {RESOURCE_TYPES.map((item) => (
               <SelectItem key={item} value={item}>
-                {item}
+                {t(`assignments.type.${item}`)}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        <Input
-          className="w-44"
-          value={form.resource_id}
-          onChange={(event) => setForm((f) => ({ ...f, resource_id: event.target.value }))}
-          placeholder={t('assignments.resourceId')}
-          aria-label={t('assignments.resourceId')}
-        />
+        {options.length > 0 ? (
+          <Select value={effectiveResourceId} onValueChange={setResourceId}>
+            <SelectTrigger className="w-64" aria-label={t('assignments.resourceId')}>
+              <SelectValue placeholder={t('assignments.pickResource')} />
+            </SelectTrigger>
+            <SelectContent>
+              {options.map((item) => (
+                <SelectItem key={item.id} value={item.id}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Input
+            className="w-64"
+            value={resourceId}
+            onChange={(event) => setResourceId(event.target.value)}
+            placeholder={t('assignments.resourceId')}
+            aria-label={t('assignments.resourceId')}
+          />
+        )}
         <Select
-          value={form.grantee_type}
-          onValueChange={(value) => setForm((f) => ({ ...f, grantee_type: value }))}
+          value={granteeType}
+          onValueChange={(value) => {
+            setGranteeType(value as 'user' | 'role');
+            setGranteeId('');
+          }}
         >
-          <SelectTrigger className="w-28" aria-label={t('assignments.granteeType')}>
+          <SelectTrigger className="w-24" aria-label={t('assignments.granteeType')}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {GRANTEE_TYPES.map((item) => (
-              <SelectItem key={item} value={item}>
-                {t(`assignments.${item}`)}
-              </SelectItem>
-            ))}
+            <SelectItem value="user">{t('assignments.user')}</SelectItem>
+            <SelectItem value="role">{t('assignments.role')}</SelectItem>
           </SelectContent>
         </Select>
-        <Input
-          className="w-52"
-          value={form.grantee_id}
-          onChange={(event) => setForm((f) => ({ ...f, grantee_id: event.target.value }))}
-          placeholder={t('assignments.granteeId')}
-          aria-label={t('assignments.granteeId')}
-        />
-        <Select value={form.perm} onValueChange={(value) => setForm((f) => ({ ...f, perm: value }))}>
-          <SelectTrigger className="w-28" aria-label={t('assignments.perm')}>
+        {granteeOptions.length > 0 ? (
+          <Select value={effectiveGranteeId} onValueChange={setGranteeId}>
+            <SelectTrigger className="w-56" aria-label={t('assignments.granteeId')}>
+              <SelectValue placeholder={t('assignments.pickGrantee')} />
+            </SelectTrigger>
+            <SelectContent>
+              {granteeOptions.map((item) => (
+                <SelectItem key={item.id} value={item.id}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Input
+            className="w-56"
+            value={granteeId}
+            onChange={(event) => setGranteeId(event.target.value)}
+            placeholder={t('assignments.granteeId')}
+            aria-label={t('assignments.granteeId')}
+          />
+        )}
+        <Select value={perm} onValueChange={setPerm}>
+          <SelectTrigger className="w-24" aria-label={t('assignments.perm')}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {PERMS.map((item) => (
               <SelectItem key={item} value={item}>
-                {item}
+                {t(`assignments.permLabel.${item}`)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -158,16 +255,38 @@ function AssignmentSection() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {(assignmentsQuery.data ?? []).map((item) => (
+          {pagedAssignments.map((item) => (
             <TableRow key={item.id} data-testid="assignment-row">
-              <TableCell className="font-mono text-xs">
-                {item.resource_type}:{item.resource_id}
-              </TableCell>
-              <TableCell className="font-mono text-xs">
-                {item.grantee_type}:{item.grantee_id}
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="shrink-0 text-[10px]">
+                    {t(`assignments.type.${item.resource_type}`)}
+                  </Badge>
+                  <span>
+                    {resourceLabel(item.resource_type, item.resource_id, resourceOptions)}
+                  </span>
+                </div>
               </TableCell>
               <TableCell>
-                <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">{item.perm}</span>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="shrink-0 text-[10px]">
+                    {item.grantee_type === 'user'
+                      ? t('assignments.user')
+                      : t('assignments.role')}
+                  </Badge>
+                  <span>
+                    {item.grantee_type === 'user'
+                      ? ((usersQuery.data ?? []).find((u) => u.username === item.grantee_id)
+                          ?.display_name ?? item.grantee_id)
+                      : ((rolesQuery.data ?? []).find((r) => r.key === item.grantee_id)?.name ??
+                          item.grantee_id)}
+                  </span>
+                </div>
+              </TableCell>
+              <TableCell>
+                <Badge variant="outline" className="font-normal">
+                  {t(`assignments.permLabel.${item.perm}`)}
+                </Badge>
               </TableCell>
               <TableCell>
                 <Button
@@ -200,137 +319,14 @@ function AssignmentSection() {
           )}
         </TableBody>
       </Table>
+      <PaginationBar
+        page={page}
+        pageSize={pageSize}
+        total={total}
+        totalPages={totalPages}
+        onPageChange={setPage}
+      />
     </section>
   );
 }
 
-function QuotaSection() {
-  const t = useT();
-  const [scope, setScope] = useState<'user' | 'role'>('user');
-  const [scopeId, setScopeId] = useState('');
-  const quotaQuery = useQuota(scope, scopeId);
-  const setQuota = useSetQuota();
-  const deleteQuota = useDeleteQuota();
-  const [limits, setLimits] = useState({ maxTokens: '', maxCost: '', maxConcurrent: '', window: 'total' });
-  const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
-
-  const submit = () => {
-    if (scopeId.trim() === '' || setQuota.isPending) return;
-    setError(null);
-    setSaved(false);
-    setQuota.mutate(
-      {
-        scope,
-        scopeId: scopeId.trim(),
-        body: {
-          max_tokens: limits.maxTokens === '' ? null : Number(limits.maxTokens),
-          max_cost: limits.maxCost === '' ? null : limits.maxCost,
-          max_concurrent_runs: limits.maxConcurrent === '' ? null : Number(limits.maxConcurrent),
-          window: limits.window as 'total',
-        },
-      },
-      {
-        onSuccess: () => setSaved(true),
-        onError: (exc) => setError(exc instanceof ApiError ? exc.message : t('api.requestFailed')),
-      },
-    );
-  };
-
-  const quota = quotaQuery.data ?? null;
-
-  return (
-    <section data-testid="quota-section">
-      <h2 className="mb-4 text-lg font-semibold">{t('quota.title')}</h2>
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <Select value={scope} onValueChange={(value) => setScope(value as 'user')}>
-          <SelectTrigger className="w-28" aria-label={t('assignments.granteeType')}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="user">{t('assignments.user')}</SelectItem>
-            <SelectItem value="role">{t('assignments.role')}</SelectItem>
-          </SelectContent>
-        </Select>
-        <Input
-          className="w-56"
-          value={scopeId}
-          onChange={(event) => {
-            setScopeId(event.target.value);
-            setSaved(false);
-          }}
-          placeholder={t('quota.subjectId')}
-          aria-label={t('quota.subjectId')}
-        />
-      </div>
-
-      {scopeId.trim() !== '' && (
-        <div className="space-y-3 rounded-lg border p-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <Input
-              className="w-40"
-              value={limits.maxTokens}
-              onChange={(event) => setLimits((l) => ({ ...l, maxTokens: event.target.value }))}
-              placeholder={t('quota.maxTokens')}
-              aria-label={t('quota.maxTokens')}
-              inputMode="numeric"
-            />
-            <Input
-              className="w-40"
-              value={limits.maxCost}
-              onChange={(event) => setLimits((l) => ({ ...l, maxCost: event.target.value }))}
-              placeholder={t('quota.maxCost')}
-              aria-label={t('quota.maxCost')}
-              inputMode="decimal"
-            />
-            <Input
-              className="w-44"
-              value={limits.maxConcurrent}
-              onChange={(event) => setLimits((l) => ({ ...l, maxConcurrent: event.target.value }))}
-              placeholder={t('quota.maxConcurrent')}
-              aria-label={t('quota.maxConcurrent')}
-              inputMode="numeric"
-            />
-            <Select
-              value={limits.window}
-              onValueChange={(value) => setLimits((l) => ({ ...l, window: value }))}
-            >
-              <SelectTrigger className="w-32" aria-label={t('quota.window')}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="day">{t('quota.day')}</SelectItem>
-                <SelectItem value="month">{t('quota.month')}</SelectItem>
-                <SelectItem value="total">{t('quota.total')}</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button size="sm" onClick={submit} disabled={setQuota.isPending}>
-              {setQuota.isPending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
-              {t('quota.save')}
-            </Button>
-            {quota !== null && (
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={deleteQuota.isPending}
-                onClick={() => deleteQuota.mutate({ scope, scopeId: scopeId.trim() })}
-              >
-                <Trash2 className="mr-1 h-4 w-4" />
-                {t('quota.remove')}
-              </Button>
-            )}
-          </div>
-          {quota !== null && (
-            <p className="text-xs text-muted-foreground" data-testid="quota-current">
-              {t('quota.current')}: {t('quota.maxTokens')}={quota.max_tokens ?? '∞'} ·{' '}
-              {t('quota.maxCost')}={quota.max_cost ?? '∞'} · {t('quota.maxConcurrent')}=
-              {quota.max_concurrent_runs ?? '∞'} · {t('quota.window')}={quota.window}
-            </p>
-          )}
-          {saved && <p className="text-xs text-green-600">{t('quota.saved')}</p>}
-          {error !== null && <p className="text-sm text-destructive">{error}</p>}
-        </div>
-      )}
-    </section>
-  );
-}

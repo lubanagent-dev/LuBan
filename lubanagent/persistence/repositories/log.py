@@ -26,6 +26,7 @@ class ApplicationLogRepository:
         request_id: str | None = None,
         level: str | None = None,
         logger: str | None = None,
+        exclude_loggers: list[str] | None = None,
         q: str | None = None,
         from_time: datetime | None = None,
         to_time: datetime | None = None,
@@ -46,6 +47,8 @@ class ApplicationLogRepository:
                 conditions.append(getattr(ApplicationLogRow, key) == value)
         if logger:
             conditions.append(ApplicationLogRow.logger.contains(logger, autoescape=True))
+        if exclude_loggers:
+            conditions.append(ApplicationLogRow.logger.not_in(exclude_loggers))
         if q:
             conditions.append(
                 sa.or_(

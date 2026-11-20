@@ -2,6 +2,16 @@
 
 > 本页讲 Agent 定义的构成、存库与版本化语义，以及 YAML 的正确用途。系统提示词的两种写法（内嵌 / 引用 Prompt 库）见 [Prompt 库](./prompt-library.md)。
 
+## 页面入口与代码位置
+
+| 在哪用（工作台页面） | 代码在哪 |
+| --- | --- |
+| 左侧「Agents」（`/agents`）：列表、新建、编辑；卡片点「调试」进调试台（`/agents/<key>/debug`） | `app/agents/*.yaml`（首次导入的示例定义）、`lubanagent/core/`（定义与版本领域模型）、`lubanagent/persistence/`（定义存库与版本表） |
+
+![工作台 Agent 列表](../images/workbench/agents.png)
+
+![Agent 调试台](../images/workbench/agent-debug.png)
+
 **是什么**：一个 Agent 的身份（名称、描述、问候语、虚拟形象）、指令（系统 Prompt）、大脑（逻辑模型槽位）、知识（挂哪些知识库）、记忆（哪种策略）、能力（可用 Tool / MCP / Skill 清单）、行为边界（最大步数、预算、超时）、输入输出契约，全部写在一份**定义**里。**定义的本体是数据库记录**——不是 YAML、不是配置文件；每次修改在库内生成一个新版本。
 
 **为什么需要**：改 Agent 行为 = 改数据库里的定义，不是改代码、不是发版；每次 Run 绑定明确的定义版本，出了问题能精确回溯"当时跑的是哪个版本"；审计与评测都建立在版本之上。

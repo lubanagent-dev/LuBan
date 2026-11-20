@@ -1,7 +1,7 @@
 # 教学要点：会话摘要记忆（memory: session-summary，长对话自动滚动摘要而非全量塞
 # 窗口）+ 双预算熔断（budget_tokens + budget_cost，token 数与费用任一超限即终止——
 # 费用治理在便宜模型长会话场景更先触顶）。适合需要跨多轮跟踪进度的助理场景。
-name: cs-followup
+name: 客服回访助手
 description: 回访小结助手——跟踪客服会话进度，随时汇总已办/待办/待确认事项
 instruction: |
   # 角色

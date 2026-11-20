@@ -80,6 +80,7 @@ async def list_logs(
     root_run_id: str | None = Query(default=None, max_length=64),
     level: str | None = Query(default=None, max_length=16),
     logger: str | None = Query(default=None, max_length=255),
+    exclude_logger: str | None = Query(default=None, max_length=1000),
     q: str | None = Query(default=None, max_length=1000),
     from_time: datetime | None = None,
     to_time: datetime | None = None,
@@ -92,6 +93,9 @@ async def list_logs(
         to_time = to_time.replace(tzinfo=to_time.tzinfo or UTC).astimezone(UTC)
     if from_time and to_time and from_time > to_time:
         raise LubanError(ErrorCode.VALIDATION_ERROR, "开始时间不能晚于结束时间")
+    exclude_loggers = [
+        name.strip() for name in (exclude_logger or "").split(",") if name.strip()
+    ] or None
     writer = getattr(request.app.state, "log_writer", None)
     if writer is not None:
         await writer.flush()
@@ -104,6 +108,7 @@ async def list_logs(
             root_run_id=root_run_id,
             level=level,
             logger=logger,
+            exclude_loggers=exclude_loggers,
             q=q,
             from_time=from_time,
             to_time=to_time,

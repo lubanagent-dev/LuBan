@@ -8,6 +8,7 @@ from fastapi import APIRouter, Query, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 
+from lubanagent.api.agent_visibility import ensure_agent_visible
 from lubanagent.api.deps import CtxDep
 from lubanagent.api.schemas import ErrorOut, RunCreateRequest
 from lubanagent.core import ErrorCode, LubanError, Run, RunStatus, TraceEvent
@@ -89,6 +90,10 @@ async def _persist_turn_messages(
 async def create_run(key: str, body: RunCreateRequest, ctx: CtxDep, http_request: Request):
     run_id = uuid.uuid4().hex
     principal = getattr(http_request.state, "principal", None)
+    # 门户主体可见性：未授权 agent 与不存在同形 404，在流开始前拒绝
+    await ensure_agent_visible(
+        ctx, principal, key, ctx.settings, ctx.db
+    )
     # R3 配额闸：token/费用/并发任一超限 → 429 QUOTA_EXCEEDED，流开始前拒绝
     denial = await _quota_denial(ctx, body, principal)
     if denial is not None:

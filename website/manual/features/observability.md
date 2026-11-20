@@ -2,6 +2,16 @@
 
 > 本页讲每次 Run 的完整 Trace 记录了什么、为什么它是治理主线的数据地基、怎么查怎么看。
 
+## 页面入口与代码位置
+
+| 在哪用（工作台页面） | 代码在哪 |
+| --- | --- |
+| 左侧「Traces」（`/traces`）：按 Run 查 Trace 详情；「日志排查」（`/diagnostics`）：Run + 日志双 Tab 排查 | `lubanagent/observability/`（Trace 记录、费用归集、评测 runner） |
+
+![Traces 页面](../images/workbench/traces.png)
+
+![日志排查页面](../images/workbench/diagnostics.png)
+
 **是什么**：每次 Run 落一条完整 Trace：Agent 定义版本、实际模型、最终 Prompt、每一次工具调用（入参/出参/耗时）、Token 用量、费用、结束原因（完成/超步/超预算/取消/错误）。
 
 **为什么需要**：排障靠它，评测素材靠它（[评测体系](./evals.md)必须基于真实运行观测），成本归因靠它（见[成本治理](./cost.md)）。一个 Trace 三种用途，是治理主线的数据地基。

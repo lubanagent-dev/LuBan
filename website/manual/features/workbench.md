@@ -2,6 +2,14 @@
 
 > 本页讲 Web 控制台的管理页面与用户端聊天入口、登录鉴权、Agent 调试台、日志排查、用户权限、虚拟形象，以及调试相关的几个会话约定。
 
+## 页面入口与代码位置
+
+| 在哪用 | 代码在哪 |
+| --- | --- |
+| 工作台本体：启动后在 `http://localhost:5173` 打开，左侧导航覆盖 Agents、Prompt 库、模型、工具、Skills、知识库、流程图、Traces、日志排查、评测、用户权限、分配与配额、审计事件；`/chat` 与 `/portal` 是用户端入口 | 前端源码在 `lubanagent/ui/`（路由表见 `src/routes.tsx`，页面在 `src/pages/`） |
+
+![工作台 Agent 列表](../images/workbench/agents.png)
+
 > 新手路径：第一次把工作台跑起来见 [本地运行](../../tutorial/01-setup-and-first-run.md)。
 
 Web 控制台：Agent 定义编辑与调试（调试台为「对话 + Prompt 试跑」双 Tab 工作台）、模型对比试跑、Prompt 库管理、Tool/MCP 在线测试、Skill 管理（上传/版本/分配）、知识库管理（上传/切块/重切/检索测试，见[知识与记忆](./knowledge-memory.md)）、流程图（确定性流程的只读拓扑视图）、Trace 可视化、评测报告查看、日志排查、用户权限管理。前端页面路由当前实测为 20 条，其中 `/diagnostics`、`/security`、`/assignments`（分配与配额）、`/audit-events`（审计事件）是平台排查与治理入口，`/chat` 与 `/portal` 是并列的用户端入口。

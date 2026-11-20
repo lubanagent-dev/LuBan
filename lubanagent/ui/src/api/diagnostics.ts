@@ -55,6 +55,7 @@ export interface LogFilter extends DiagnosticRunFilter {
   request_id?: string;
   level?: string;
   logger?: string;
+  exclude_logger?: string;
   q?: string;
   from_time?: string;
   to_time?: string;

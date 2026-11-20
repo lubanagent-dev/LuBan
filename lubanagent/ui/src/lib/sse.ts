@@ -5,7 +5,8 @@
 
 import { useCallback, useRef, useState } from 'react';
 
-import { authHeaders, isUnauthorizedStatus, markUnauthorized } from '@/lib/auth';
+import { isUnauthorizedStatus, markUnauthorized } from '@/lib/auth';
+import { identityHeaders } from '@/api/client';
 import { t } from '@/lib/i18n';
 
 /** 一个解析完成的 SSE 帧；data 已尽力 JSON.parse，失败保留原始文本 */
@@ -83,7 +84,7 @@ export async function streamSsePost(
 ): Promise<void> {
   const response = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...authHeaders(), ...options.headers },
+    headers: { 'Content-Type': 'application/json', ...identityHeaders(), ...options.headers },
     body: JSON.stringify(body ?? {}),
     signal: options.signal ?? null,
   });

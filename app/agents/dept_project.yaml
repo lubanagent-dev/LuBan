@@ -1,4 +1,4 @@
-name: dept-project
+name: 部门项目助手
 description: 部门项目小助手——LubanAgent 项目文档问答（纯 RAG + 防错答守门范本）
 instruction: |
   # 角色

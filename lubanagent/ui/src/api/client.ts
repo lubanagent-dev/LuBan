@@ -9,6 +9,7 @@ import { t } from '@/lib/i18n';
 import createClient from 'openapi-fetch';
 
 import { authHeaders, markUnauthorized } from '@/lib/auth';
+import { portalHeaders } from '@/lib/portal';
 
 import type { paths } from './schema';
 
@@ -16,10 +17,20 @@ export const API_BASE: string = import.meta.env.VITE_API_BASE ?? '';
 
 export const client = createClient<paths>({ baseUrl: API_BASE });
 
+/**
+ * 统一身份头：工作台凭据（内存态 Key/会话令牌）优先，门户令牌兜底。
+ * 两个身份域不共存于同一 Authorization；门户用户（无工作台凭据）的
+ * /v1 请求由此携带门户令牌，后端按 portal_user:* 主体裁决可见性与隔离。
+ */
+export function identityHeaders(): Record<string, string> {
+  const merged = { ...portalHeaders(), ...authHeaders() };
+  return 'Authorization' in merged ? { Authorization: merged.Authorization } : {};
+}
+
 // REST 统一身份注入：每个 /v1 请求带上内存态 Key；401 统一登记（不重试）
 client.use({
   onRequest({ request }) {
-    for (const [name, value] of Object.entries(authHeaders())) {
+    for (const [name, value] of Object.entries(identityHeaders())) {
       request.headers.set(name, value);
     }
     return request;
@@ -36,7 +47,7 @@ client.use({
  */
 export async function authedFetch(url: string, init: RequestInit = {}): Promise<Response> {
   const headers = new Headers(init.headers ?? {});
-  for (const [name, value] of Object.entries(authHeaders())) {
+  for (const [name, value] of Object.entries(identityHeaders())) {
     headers.set(name, value);
   }
   const response = await fetch(url, { ...init, headers });

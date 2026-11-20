@@ -1,4 +1,4 @@
-name: cs-triage
+name: 客服分流调度
 description: 客服分流 supervisor——判断请求类型并委派成员或直接答复
 instruction: |
   # 角色

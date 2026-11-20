@@ -345,6 +345,15 @@ async def get_principal(request: Request, ctx: CtxDep) -> Principal:
         # 平台账号按 run:read / run:approve。
         if has_permission(principal, "portal:access"):
             return principal
+    if request.method in ("GET", "HEAD") and (
+        path == "/v1/agents"
+        or path.count("/") == 3 and path.startswith("/v1/agents/")
+        or path.startswith("/v1/agents/") and path.endswith("/avatar")
+    ):
+        # 门户用户读智能体列表/详情/头像：portal:access 即可；
+        # 门户主体的可见范围由路由层按分配过滤（agent_visibility），不放大成工作台 config:read。
+        if has_permission(principal, "portal:access"):
+            return principal
     required = required_permission(request.method, path)
     if required is not None and not has_permission(principal, required):
         raise LubanError(
