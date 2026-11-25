@@ -122,14 +122,14 @@ export default function DiagnosticsPage() {
   }
 
   return (
-    <div className="space-y-4 p-4">
-      <header>
+    <div className="space-y-6 p-6">
+      <header className="border-b border-border/60 pb-4">
         <h1 className="text-xl font-semibold">{t('diag.title')}</h1>
-        <p className="text-sm text-muted-foreground">{t('diag.subtitle')}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{t('diag.subtitle')}</p>
       </header>
 
       <form
-        className="grid gap-3 rounded-md border bg-card/40 p-3 md:grid-cols-3 xl:grid-cols-7"
+        className="grid gap-3.5 rounded-xl border border-border/70 bg-card p-5 shadow-sm md:grid-cols-3 xl:grid-cols-6"
         onSubmit={(event) => {
           event.preventDefault();
           try {
@@ -235,7 +235,7 @@ export default function DiagnosticsPage() {
             onChange={(event) => update('to_time', event.target.value)}
           />
         </div>
-        <div className="flex items-end md:col-span-3 xl:col-span-7">
+        <div className="flex items-end md:col-span-3 xl:col-span-6">
           <div className="w-full space-y-2">
             {timeError && <p className="text-sm text-red-500">{timeError}</p>}
             <Button type="submit">{t('diag.query')}</Button>
@@ -259,7 +259,7 @@ export default function DiagnosticsPage() {
               {runsQuery.error.message}
             </div>
           )}
-          <div className="rounded-md border">
+          <div className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -331,7 +331,7 @@ export default function DiagnosticsPage() {
                 .replace('{failed}', String(logsQuery.data.write_failures ?? 0))}
             </p>
           ) : null}
-          <div className="rounded-md border">
+          <div className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -357,7 +357,7 @@ export default function DiagnosticsPage() {
                     <TableCell className="max-w-96 whitespace-pre-wrap break-words">
                       {log.message || '—'}
                     </TableCell>
-                    <TableCell className="max-w-96 whitespace-pre-wrap break-words text-[11px] text-red-500">
+                    <TableCell className="max-w-96 whitespace-pre-wrap break-words text-xs text-red-500">
                       {log.exception ?? '—'}
                     </TableCell>
                     <TableCell className="font-mono text-xs">

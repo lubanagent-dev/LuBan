@@ -34,6 +34,8 @@ export interface AuthState {
   currentUser: SessionUser | null;
   /** 最近一次收到 401（Key 缺失/失效，或网关未放行） */
   rejected: boolean;
+  /** 显式请求打开工作台登录对话框 */
+  loginModalOpen: boolean;
   /**
    * 身份纪元：每次凭据/身份变化（含 401 边沿）自增。
    * 应用外壳用它作为 React key 强制整树重挂载——queryClient.clear() 会把
@@ -48,6 +50,7 @@ let state: AuthState = {
   sessionToken: null,
   currentUser: null,
   rejected: false,
+  loginModalOpen: false,
   identityEpoch: 0,
 };
 
@@ -70,6 +73,13 @@ export const authStore = {
   getSnapshot: snapshot,
 };
 
+export function setLoginModalOpen(open: boolean): void {
+  if (state.loginModalOpen !== open) {
+    state = { ...state, loginModalOpen: open };
+    emit();
+  }
+}
+
 /** 设置 Key（内存替换，不落任何存储）；API Key 身份替换账号身份，避免旧登录残留。 */
 export function setApiKey(key: string): void {
   state = {
@@ -77,6 +87,7 @@ export function setApiKey(key: string): void {
     sessionToken: null,
     currentUser: null,
     rejected: false,
+    loginModalOpen: false,
     identityEpoch: state.identityEpoch + 1,
   };
   emit();
@@ -89,6 +100,7 @@ export function setSession(token: string, user: SessionUser): void {
     sessionToken: token,
     currentUser: user,
     rejected: false,
+    loginModalOpen: false,
     identityEpoch: state.identityEpoch + 1,
   };
   emit();
@@ -101,6 +113,7 @@ export function clearSession(): void {
     sessionToken: null,
     currentUser: null,
     rejected: false,
+    loginModalOpen: false,
     identityEpoch: state.identityEpoch + 1,
   };
   emit();
@@ -108,7 +121,13 @@ export function clearSession(): void {
 
 /** 清除内存 Key；通知所有订阅者，顶栏徽章与依赖鉴权状态的组件立即同步。 */
 export function clearApiKey(): void {
-  state = { ...state, apiKey: null, rejected: false, identityEpoch: state.identityEpoch + 1 };
+  state = {
+    ...state,
+    apiKey: null,
+    rejected: false,
+    loginModalOpen: false,
+    identityEpoch: state.identityEpoch + 1,
+  };
   emit();
 }
 
@@ -119,6 +138,7 @@ export function clearAllCredentials(): void {
     sessionToken: null,
     currentUser: null,
     rejected: false,
+    loginModalOpen: false,
     identityEpoch: state.identityEpoch + 1,
   };
   emit();
@@ -129,7 +149,12 @@ export function markUnauthorized(): void {
   if (!state.rejected) {
     // 401 边沿同时推进纪元：配合 queryClient.clear() 让搁浅的 observer 通过
     // 整树重挂载重新订阅，而不是永远停在“加载中”。
-    state = { ...state, rejected: true, identityEpoch: state.identityEpoch + 1 };
+    state = {
+      ...state,
+      rejected: true,
+      loginModalOpen: true,
+      identityEpoch: state.identityEpoch + 1,
+    };
     emit();
   }
 }

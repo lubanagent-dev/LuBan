@@ -63,7 +63,7 @@ export function AvatarCard({ agent, onSynced }: AvatarCardProps) {
       className="flex flex-wrap items-center gap-3 rounded-lg border p-3"
       data-testid="avatar-card"
     >
-      <AgentAvatar agent={agent} size={48} />
+      {agent.avatar && <AgentAvatar agent={agent} size={48} />}
       <div className="min-w-0 flex-1">
         <div className="text-sm font-medium">{t('avatar.title')}</div>
         <div className="text-xs text-muted-foreground">

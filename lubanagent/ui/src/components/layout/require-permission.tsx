@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { setLoginModalOpen } from '@/lib/auth';
 import { useT } from '@/lib/i18n';
 import { usePermissions } from '@/lib/permissions';
 
@@ -38,13 +39,16 @@ export function RequirePermission({
   if (!me) {
     return (
       <div className="p-6">
-        <Card>
+        <Card className="mx-auto max-w-lg">
           <CardHeader>
             <CardTitle className="text-xl">{t('perm.loginRequired')}</CardTitle>
             <CardDescription>{t('perm.loginRequiredDesc')}</CardDescription>
           </CardHeader>
-          <CardContent>
-            <Button asChild>
+          <CardContent className="flex items-center gap-2.5">
+            <Button onClick={() => setLoginModalOpen(true)}>
+              {t('auth.login')}
+            </Button>
+            <Button asChild variant="outline">
               <Link to="/agents">{t('perm.backToWorkbench')}</Link>
             </Button>
           </CardContent>
@@ -56,7 +60,7 @@ export function RequirePermission({
   if (!can(permission)) {
     return (
       <div className="p-6">
-        <Card className="border-red-500/40" data-testid="forbidden-page">
+        <Card className="mx-auto max-w-lg border-red-500/40" data-testid="forbidden-page">
           <CardHeader>
             <CardTitle className="text-xl">{t('perm.forbidden')}</CardTitle>
             <CardDescription>
@@ -65,7 +69,10 @@ export function RequirePermission({
               {t('perm.forbiddenDescPost')}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex items-center gap-2.5">
+            <Button onClick={() => setLoginModalOpen(true)}>
+              {t('auth.login')}
+            </Button>
             <Button asChild variant="outline">
               <Link to="/agents">{t('perm.backToWorkbench')}</Link>
             </Button>

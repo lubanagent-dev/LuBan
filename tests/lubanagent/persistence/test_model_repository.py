@@ -89,6 +89,73 @@ async def test_brain_mapping_to_missing_model_returns_none(session: AsyncSession
     assert await repo.get_brain_mapping("dev", BrainProfile.CHEAP) is None
 
 
+async def test_api_key_persist_preserve_and_clear(session: AsyncSession) -> None:
+    repo = ModelRepository(session)
+    model = ModelDefinition(
+        key="ds-persist",
+        provider="deepseek",
+        model_name="deepseek-chat",
+        factory="openai_compat",
+        api_key="sk-initial-key",
+    )
+    saved = await repo.upsert_model(model)
+    assert saved.api_key == "sk-initial-key"
+
+    # 编辑时 api_key=None 且 clear_api_key=False 保留旧密钥
+    updated = model.model_copy(update={"model_name": "deepseek-reasoner", "api_key": None})
+    preserved = await repo.upsert_model(updated)
+    assert preserved.api_key == "sk-initial-key"
+    assert preserved.model_name == "deepseek-reasoner"
+
+    # clear_api_key=True 显式清空
+    cleared = await repo.upsert_model(updated, clear_api_key=True)
+    assert cleared.api_key is None
+    loaded = await repo.get_model("ds-persist")
+    assert loaded is not None and loaded.api_key is None
+
+
+async def test_set_model_enabled_and_brain_mapping_skips_disabled(session: AsyncSession) -> None:
+    repo = ModelRepository(session)
+    await repo.seed_brain_profiles(["smart"])
+    await repo.upsert_model(make_model("toggle-m"))
+    await repo.set_brain_mapping("dev", BrainProfile.SMART, "toggle-m")
+    assert (await repo.get_brain_mapping("dev", BrainProfile.SMART)) is not None
+
+    disabled = await repo.set_model_enabled("toggle-m", enabled=False)
+    assert disabled.enabled is False
+    assert await repo.get_brain_mapping("dev", BrainProfile.SMART) is None
+
+    reenabled = await repo.set_model_enabled("toggle-m", enabled=True)
+    assert reenabled.enabled is True
+    mapped = await repo.get_brain_mapping("dev", BrainProfile.SMART)
+    assert mapped is not None and mapped.key == "toggle-m"
+
+    with pytest.raises(LubanError) as exc_info:
+        await repo.set_model_enabled("missing-m", enabled=False)
+    assert exc_info.value.code == ErrorCode.MODEL_NOT_FOUND
+
+
+async def test_delete_model_checks_active_brain_mappings(session: AsyncSession) -> None:
+    repo = ModelRepository(session)
+    await repo.seed_brain_profiles(["smart"])
+    await repo.upsert_model(make_model("del-m"))
+    await repo.upsert_model(make_model("other-m"))
+    await repo.set_brain_mapping("dev", BrainProfile.SMART, "del-m")
+
+    with pytest.raises(LubanError) as exc_info:
+        await repo.delete_model("del-m")
+    assert exc_info.value.code == ErrorCode.MODEL_IN_USE
+
+    # 改指其他模型后即可删除
+    await repo.set_brain_mapping("dev", BrainProfile.SMART, "other-m")
+    await repo.delete_model("del-m")
+    assert await repo.get_model("del-m") is None
+
+    with pytest.raises(LubanError) as exc_info:
+        await repo.delete_model("del-m")
+    assert exc_info.value.code == ErrorCode.MODEL_NOT_FOUND
+
+
 @pytest.fixture(params=["sqlite", "mysql"])
 async def catalog_db(request, tmp_path):
     if request.param == "mysql":

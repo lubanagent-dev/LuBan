@@ -30,12 +30,14 @@ interface ArchivedTurn {
 function TurnBlock({ input, children }: { input: string; children: ReactNode }) {
   const t = useT();
   return (
-    <section className="space-y-2">
-      <div className="flex items-start gap-2">
-        <Badge variant="secondary" className="mt-0.5 shrink-0">
+    <section className="space-y-3 rounded-xl border border-border/60 bg-card/50 p-4 shadow-sm">
+      <div className="flex items-start gap-2.5">
+        <Badge variant="secondary" className="mt-1 shrink-0">
           {t('debug.roleYou')}
         </Badge>
-        <div className="whitespace-pre-wrap rounded-md bg-muted px-3 py-2 text-sm">{input}</div>
+        <div className="whitespace-pre-wrap rounded-lg border border-border/50 bg-muted/60 px-3.5 py-2 text-sm">
+          {input}
+        </div>
       </div>
       <div className="pl-1">{children}</div>
     </section>
@@ -96,7 +98,7 @@ export default function AgentDebugPage() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex items-center gap-3 border-b px-4 py-3">
+      <header className="flex items-center gap-3 border-b border-border/70 bg-card/60 px-6 py-3.5 backdrop-blur-sm">
         <Button variant="ghost" size="sm" asChild>
           <Link to={`/agents/${encodeURIComponent(key)}`}>
             <ArrowLeft className="mr-1 h-4 w-4" />
@@ -113,7 +115,7 @@ export default function AgentDebugPage() {
       </header>
 
       <Tabs defaultValue="chat" className="flex min-h-0 flex-1 flex-col">
-        <div className="border-b px-4 pt-2">
+        <div className="border-b border-border/70 bg-card/30 px-6 py-2.5">
           <TabsList>
             <TabsTrigger value="chat">{t('debug.tabChat')}</TabsTrigger>
             <TabsTrigger value="playground">{t('debug.tabPlayground')}</TabsTrigger>
@@ -126,10 +128,10 @@ export default function AgentDebugPage() {
           forceMount
           className="mt-0 flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden"
         >
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
-        <div className="mx-auto max-w-3xl space-y-6">
+      <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
+        <div className="mx-auto max-w-3xl space-y-5">
           {turns.length === 0 && currentInput === null && (
-            <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+            <div className="rounded-xl border border-dashed border-border/80 bg-muted/20 p-8 text-center text-sm text-muted-foreground">
               {agent?.greeting || t('debug.startHint')}
             </div>
           )}
@@ -149,8 +151,8 @@ export default function AgentDebugPage() {
         </div>
       </div>
 
-      <div className="border-t px-4 py-3">
-        <div className="mx-auto flex max-w-3xl items-end gap-2">
+      <div className="border-t border-border/70 bg-card/60 px-6 py-4 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-3xl items-end gap-2.5">
           <Textarea
             value={input}
             onChange={(event) => setInput(event.target.value)}

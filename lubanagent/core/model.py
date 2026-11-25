@@ -1,4 +1,4 @@
-"""模型定义: 模型注册键、能力清单与固定使用参数, 不存密钥本体。"""
+"""模型定义: 模型注册键、能力清单、连接参数与可选直配 API Key。"""
 
 import re
 from typing import Any
@@ -143,7 +143,16 @@ class ModelDefinition(BaseModel):
     params: dict[str, Any] = Field(default_factory=dict)
     base_url: str | None = None
     api_key_env: str | None = None
+    api_key: str | None = None
     enabled: bool = True
+
+    @field_validator("api_key", mode="before")
+    @classmethod
+    def _normalize_api_key(cls, value: Any) -> Any:
+        if isinstance(value, str):
+            stripped = value.strip()
+            return stripped or None
+        return value
 
     @field_validator("api_key_env")
     @classmethod

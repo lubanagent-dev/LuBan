@@ -126,6 +126,7 @@ export const models: ModelDefinitionOut[] = [
     },
     params: { temperature: 0.3 },
     api_key_env: 'DEEPSEEK_API_KEY',
+    has_api_key: true,
     enabled: true,
   },
   {
@@ -145,6 +146,7 @@ export const models: ModelDefinitionOut[] = [
     },
     params: { temperature: 0.7 },
     api_key_env: 'DASHSCOPE_API_KEY',
+    has_api_key: false,
     enabled: true,
   },
   {
@@ -164,6 +166,7 @@ export const models: ModelDefinitionOut[] = [
     },
     params: {},
     api_key_env: 'ZHIPU_API_KEY',
+    has_api_key: false,
     enabled: false,
   },
 ];

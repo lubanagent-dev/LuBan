@@ -168,12 +168,12 @@ export default function ModelComparePage() {
 
   return (
     <div className="space-y-6 p-6">
-      <div>
+      <div className="border-b border-border/60 pb-4">
         <h1 className="text-xl font-semibold">{t('compare.title')}</h1>
-        <p className="text-sm text-muted-foreground">{t('compare.desc')}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{t('compare.desc')}</p>
       </div>
 
-      <div className="grid gap-3 rounded-md border p-4 lg:grid-cols-[1fr_1fr_1fr_auto]">
+      <div className="grid gap-4 rounded-xl border border-border/70 bg-card p-5 shadow-sm lg:grid-cols-[1fr_1fr_1fr_auto]">
         <div className="space-y-1.5">
           <p className="text-xs font-medium text-muted-foreground">Agent</p>
           <Select value={agentKey} onValueChange={setAgentKey}>

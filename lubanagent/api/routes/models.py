@@ -14,6 +14,8 @@ from lubanagent.api.schemas import (
     BrainProfileReferencesOut,
     BrainProfilesOut,
     ModelDefinitionOut,
+    ModelEnabledPatch,
+    ModelUpsertRequest,
 )
 from lubanagent.core import BrainProfile, ErrorCode, LubanError, ModelDefinition
 from lubanagent.core.model import redact_registered_model_params
@@ -23,7 +25,7 @@ router = APIRouter(tags=["models"])
 
 
 def _mask(definition: ModelDefinition) -> ModelDefinitionOut:
-    """脱敏：不输出 base_url 等连接信息，api_key_env 只是变量名可输出。"""
+    """脱敏：不输出 api_key 明文和 base_url，只输出 api_key_env 变量名和是否已保存密钥。"""
     return ModelDefinitionOut(
         key=definition.key,
         provider=definition.provider,
@@ -32,6 +34,7 @@ def _mask(definition: ModelDefinition) -> ModelDefinitionOut:
         capability=definition.capability,
         params=redact_registered_model_params(definition.factory, definition.params),
         api_key_env=definition.api_key_env,
+        has_api_key=bool(definition.api_key),
         enabled=definition.enabled,
     )
 
@@ -39,15 +42,36 @@ def _mask(definition: ModelDefinition) -> ModelDefinitionOut:
 @router.get("/models", response_model=list[ModelDefinitionOut])
 async def list_models(ctx: CtxDep) -> list[ModelDefinitionOut]:
     async with ctx.db.session() as session:
-        definitions = await ModelRepository(session).list_models()
+        definitions = await ModelRepository(session).list_models(enabled_only=False)
     return [_mask(definition) for definition in definitions]
 
 
 @router.put("/models", response_model=ModelDefinitionOut)
-async def upsert_model(definition: ModelDefinition, ctx: CtxDep) -> ModelDefinitionOut:
+async def upsert_model(body: ModelUpsertRequest, ctx: CtxDep) -> ModelDefinitionOut:
+    definition = ModelDefinition.model_validate(
+        body.model_dump(exclude={"clear_api_key"})
+    )
     async with ctx.db.session() as session:
-        await ModelRepository(session).upsert_model(definition)
-    return _mask(definition)
+        saved = await ModelRepository(session).upsert_model(
+            definition, clear_api_key=body.clear_api_key
+        )
+    return _mask(saved)
+
+
+@router.patch("/models/{key}/enabled", response_model=ModelDefinitionOut)
+async def set_model_enabled(
+    key: str, body: ModelEnabledPatch, ctx: CtxDep
+) -> ModelDefinitionOut:
+    async with ctx.db.session() as session:
+        updated = await ModelRepository(session).set_model_enabled(key, enabled=body.enabled)
+    return _mask(updated)
+
+
+@router.delete("/models/{key}")
+async def delete_model(key: str, ctx: CtxDep) -> dict[str, bool]:
+    async with ctx.db.session() as session:
+        await ModelRepository(session).delete_model(key)
+    return {"removed": True}
 
 
 @router.get("/brain-mappings", response_model=list[BrainMappingOut])

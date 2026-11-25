@@ -50,10 +50,12 @@ export default function AuditEventsPage() {
   });
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4 p-6" data-testid="audit-events-page">
-      <h1 className="text-lg font-semibold">{t('audit.title')}</h1>
+    <div className="space-y-6 p-6" data-testid="audit-events-page">
+      <div className="border-b border-border/60 pb-4">
+        <h1 className="text-xl font-semibold">{t('audit.title')}</h1>
+      </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2.5 rounded-xl border border-border/70 bg-card p-4 shadow-sm">
         <Select value={eventType} onValueChange={setEventType}>
           <SelectTrigger className="w-56" aria-label={t('audit.eventType')}>
             <SelectValue />
@@ -87,6 +89,7 @@ export default function AuditEventsPage() {
         />
       </div>
 
+      <div className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm">
       <Table>
         <TableHeader>
           <TableRow>
@@ -137,6 +140,7 @@ export default function AuditEventsPage() {
           )}
         </TableBody>
       </Table>
+      </div>
     </div>
   );
 }

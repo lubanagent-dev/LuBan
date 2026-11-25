@@ -78,7 +78,7 @@ function ModelSlotSelect({
         )}
         {models.map((model) => (
           <SelectItem key={model.key} value={model.key} className="font-mono text-xs">
-            {model.key}
+            {model.enabled ? model.key : `${model.key}（${t('models.disabled')}）`}
           </SelectItem>
         ))}
       </SelectContent>
@@ -200,7 +200,7 @@ function BrainProfileDialog({
                 )}
                 {models.map((item) => (
                   <SelectItem key={item.key} value={item.key}>
-                    {item.key}
+                    {item.enabled ? item.key : `${item.key}（${t('models.disabled')}）`}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -390,7 +390,7 @@ export function BrainMappingCard() {
           <div
             key={slot.key}
             data-brain-profile={slot.key}
-            className="flex flex-wrap items-center gap-3 rounded-md border px-4 py-3"
+            className="flex flex-wrap items-center gap-3 rounded-lg border border-border/70 bg-muted/20 px-4 py-3 transition-colors hover:bg-muted/35"
           >
             <div className="min-w-40 flex-1">
               <div className="flex items-center gap-2">

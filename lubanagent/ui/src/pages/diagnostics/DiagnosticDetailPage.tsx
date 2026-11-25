@@ -46,7 +46,7 @@ function RunTreeItem({ run, isCurrent }: { run: Run; isCurrent: boolean }) {
   const [open, setOpen] = useState(isCurrent);
   const t = useT();
   return (
-    <div className="rounded border p-2">
+    <div className="rounded-lg border border-border/70 bg-muted/20 p-2.5">
       <button
         type="button"
         className="flex w-full items-center gap-2 text-left text-xs"
@@ -56,13 +56,13 @@ function RunTreeItem({ run, isCurrent }: { run: Run; isCurrent: boolean }) {
         <span className="font-mono">{run.id}</span>
         <RunStatusBadge status={run.status} />
         {isCurrent && (
-          <Badge variant="outline" className="text-[10px]">
+          <Badge variant="outline" className="text-xs">
             {t('common.current')}
           </Badge>
         )}
       </button>
       {open && (
-        <div className="mt-2 space-y-2 border-t pt-2 text-[11px]">
+        <div className="mt-2 space-y-2 border-t pt-2 text-xs">
           <div>
             <span className="text-muted-foreground">{t('diagdetail.agentLabel')}</span>
             <span className="font-mono">{run.agent_key}</span>
@@ -99,10 +99,10 @@ function RunTreeItem({ run, isCurrent }: { run: Run; isCurrent: boolean }) {
 function ExtraTree({ extra }: { extra: Record<string, unknown> }) {
   const t = useT();
   const hasContent = extra && Object.keys(extra).length > 0;
-  if (!hasContent) return <span className="text-[11px] text-muted-foreground">—</span>;
+  if (!hasContent) return <span className="text-xs text-muted-foreground">—</span>;
   return (
     <details>
-      <summary className="cursor-pointer text-[11px] text-muted-foreground hover:text-foreground">
+      <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
         {t('diagdetail.extraToggle')}
       </summary>
       <div className="mt-1 max-w-72">
@@ -148,8 +148,8 @@ export default function DiagnosticDetailPage() {
   const pageLogs = logsQuery.data?.items ?? [];
 
   return (
-    <div className="space-y-4 p-4">
-      <header className="flex flex-wrap items-center gap-3">
+    <div className="space-y-6 p-6">
+      <header className="flex flex-wrap items-center gap-3 border-b border-border/60 pb-4">
         <Button variant="ghost" size="sm" asChild>
           <Link to="/diagnostics">
             <ArrowLeft className="mr-1 h-4 w-4" />
@@ -285,7 +285,7 @@ export default function DiagnosticDetailPage() {
                   <div className="max-h-96 space-y-2 overflow-y-auto rounded border bg-muted/20 p-3">
                     {sessionMessages.map((message) => (
                       <div key={message.id} className="space-y-0.5">
-                        <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                           {message.role}
                         </span>
                         <p className="whitespace-pre-wrap break-words text-xs leading-5">
@@ -344,7 +344,7 @@ export default function DiagnosticDetailPage() {
                 {logsQuery.error.message}
               </div>
             )}
-            <div className="rounded-md border">
+            <div className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -410,25 +410,25 @@ export default function DiagnosticDetailPage() {
 function LogRow({ log }: { log: LogEntry }) {
   return (
     <TableRow key={log.id}>
-      <TableCell className="whitespace-nowrap text-[11px] text-muted-foreground">
+      <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
         {formatDateTime(log.created_at)}
       </TableCell>
-      <TableCell className="font-mono text-[11px]">
+      <TableCell className="font-mono text-xs">
         <span className={log.level.toLowerCase() === 'error' ? 'text-red-500' : ''}>
           {log.level}
         </span>
         <span className="text-muted-foreground"> / {log.logger}</span>
       </TableCell>
-      <TableCell className="font-mono text-[11px] text-muted-foreground">
+      <TableCell className="font-mono text-xs text-muted-foreground">
         {log.pathname ? `${log.pathname}:${log.lineno}` : '—'}
       </TableCell>
-      <TableCell className="font-mono text-[11px]">
+      <TableCell className="font-mono text-xs">
         {[log.run_id, log.trace_id, log.request_id].filter(Boolean).join(' / ') || '—'}
       </TableCell>
-      <TableCell className="max-w-96 whitespace-pre-wrap break-words text-[11px]">
+      <TableCell className="max-w-96 whitespace-pre-wrap break-words text-xs">
         {log.message || '—'}
       </TableCell>
-      <TableCell className="max-w-96 whitespace-pre-wrap break-words text-[11px] text-red-500">
+      <TableCell className="max-w-96 whitespace-pre-wrap break-words text-xs text-red-500">
         {log.exception ?? '—'}
       </TableCell>
       <TableCell>
@@ -459,7 +459,7 @@ function TraceSection({
   const t = useT();
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="rounded-md border p-3">
+    <div className="rounded-xl border border-border/70 bg-card p-3.5 shadow-sm">
       <button
         type="button"
         className="flex w-full items-center gap-2 text-left text-xs"
@@ -470,7 +470,7 @@ function TraceSection({
           Agent {agentKey} / Run {runId} / Trace {traceId}
         </span>
         {isCurrent && (
-          <Badge variant="outline" className="text-[10px]">
+          <Badge variant="outline" className="text-xs">
             {t('common.current')}
           </Badge>
         )}

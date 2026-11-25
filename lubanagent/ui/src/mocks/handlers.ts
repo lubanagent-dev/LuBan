@@ -48,7 +48,8 @@ import type { SessionUser } from '@/lib/auth';
 type AgentDefinition = components['schemas']['AgentDefinition'];
 type AgentVersion = components['schemas']['AgentVersion'];
 type BrainMappingSetRequest = components['schemas']['BrainMappingSetRequest'];
-type ModelDefinition = components['schemas']['ModelDefinition'];
+type ModelUpsertRequest = components['schemas']['ModelUpsertRequest'];
+type ModelEnabledPatch = components['schemas']['ModelEnabledPatch'];
 type Run = components['schemas']['Run'];
 type RunCreateRequest = components['schemas']['RunCreateRequest'];
 type TraceEvent = components['schemas']['TraceEvent'];
@@ -496,7 +497,13 @@ export const handlers = [
   http.get('*/v1/models', () => HttpResponse.json(models)),
 
   http.put('*/v1/models', async ({ request }) => {
-    const definition = (await request.json()) as ModelDefinition;
+    const definition = (await request.json()) as ModelUpsertRequest;
+    const index = models.findIndex((model) => model.key === definition.key);
+    const existing = index >= 0 ? models[index] : undefined;
+    const hasApiKey = definition.clear_api_key
+      ? false
+      : Boolean(definition.api_key && definition.api_key.trim()) ||
+        Boolean(existing?.has_api_key);
     const masked = {
       key: definition.key,
       provider: definition.provider,
@@ -505,12 +512,36 @@ export const handlers = [
       capability: definition.capability,
       params: definition.params ?? {},
       api_key_env: definition.api_key_env ?? null,
+      has_api_key: hasApiKey,
       enabled: definition.enabled ?? true,
     };
-    const index = models.findIndex((model) => model.key === masked.key);
     if (index >= 0) models[index] = masked;
     else models.push(masked);
     return HttpResponse.json(masked);
+  }),
+
+  http.patch('*/v1/models/:key/enabled', async ({ params, request }) => {
+    const body = (await request.json()) as ModelEnabledPatch;
+    const model = models.find((item) => item.key === params.key);
+    if (!model) return errorOut(404, 'MODEL_NOT_FOUND', `模型不存在: ${params.key}`);
+    model.enabled = body.enabled;
+    return HttpResponse.json(model);
+  }),
+
+  http.delete('*/v1/models/:key', ({ params }) => {
+    const index = models.findIndex((item) => item.key === params.key);
+    if (index < 0) return errorOut(404, 'MODEL_NOT_FOUND', `模型不存在: ${params.key}`);
+    const refs = brainMappings.filter((mapping) => mapping.model_key === params.key);
+    if (refs.length > 0) {
+      const slots = refs.map((r) => `${r.env}/${r.profile}`).join(', ');
+      return errorOut(
+        409,
+        'MODEL_IN_USE',
+        `模型 ${params.key} 正被大脑槽位引用（${slots}），请先切换槽位映射后再删除`,
+      );
+    }
+    models.splice(index, 1);
+    return HttpResponse.json({ removed: true });
   }),
 
   http.put('*/v1/brain-mappings', async ({ request }) => {

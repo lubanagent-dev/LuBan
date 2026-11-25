@@ -129,3 +129,25 @@ def test_unknown_provider_raises_validation_error() -> None:
     with pytest.raises(LubanError) as exc_info:
         openai_compat_definition(key="x", provider="unknown", model_name="m")
     assert exc_info.value.code == ErrorCode.VALIDATION_ERROR
+
+
+def test_stored_api_key_works_without_env_and_overrides_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+    definition = ModelDefinition(
+        key="ds-stored",
+        provider="deepseek",
+        model_name="deepseek-chat",
+        factory="openai_compat",
+        api_key_env="DEEPSEEK_API_KEY",
+        api_key="sk-db-persisted",
+    )
+    model = create_openai_compatible(definition)
+    assert isinstance(model, ChatOpenAI)
+    assert model.openai_api_key.get_secret_value() == "sk-db-persisted"
+
+    # 即使环境变量也存在，仍优先用数据库直配的 api_key
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-env-fallback")
+    model2 = create_openai_compatible(definition)
+    assert model2.openai_api_key.get_secret_value() == "sk-db-persisted"

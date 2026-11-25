@@ -214,9 +214,9 @@ export default function EvalsPage() {
 
   return (
     <div className="space-y-6 p-6">
-      <div>
+      <div className="border-b border-border/60 pb-4">
         <h1 className="text-xl font-semibold">{t('evals.title')}</h1>
-        <p className="text-sm text-muted-foreground">{t('evals.subtitle')}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{t('evals.subtitle')}</p>
       </div>
 
       {evalsQuery.isLoading && <p className="text-sm text-muted-foreground">{t('common.loading')}</p>}
@@ -228,7 +228,7 @@ export default function EvalsPage() {
       )}
 
       {evalsQuery.isSuccess && (
-        <div className="rounded-md border">
+        <div className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm">
           <Table>
             <TableHeader>
               <TableRow>

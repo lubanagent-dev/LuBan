@@ -7,6 +7,7 @@
 import {
   FileDown,
   FileUp,
+  LayoutDashboard,
   LogOut,
   MessageCircle,
   MessagesSquare,
@@ -14,6 +15,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import {
   deleteSessionFile,
@@ -74,19 +76,21 @@ export function SessionSidebar({
 
   return (
     <aside
-      className="flex w-72 shrink-0 flex-col border-r bg-muted/30"
+      className="flex w-72 shrink-0 flex-col border-r border-border/80 bg-card/80 backdrop-blur-sm"
       data-testid="portal-session-sidebar"
     >
-      <div className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
-        <MessageCircle className="h-5 w-5 text-primary" />
+      <div className="flex h-14 shrink-0 items-center gap-2.5 border-b border-border/80 px-4">
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15 text-primary ring-1 ring-primary/30">
+          <MessageCircle className="h-4 w-4" />
+        </div>
         <span className="text-sm font-semibold">{t('portal.title')}</span>
       </div>
 
-      <div className="shrink-0 p-2">
+      <div className="shrink-0 p-3">
         <Button
           variant="outline"
           size="sm"
-          className="w-full justify-start"
+          className="w-full justify-start border-dashed"
           disabled={createSession.isPending}
           onClick={onNewChat}
         >
@@ -96,26 +100,28 @@ export function SessionSidebar({
       </div>
 
       <ScrollArea className="min-h-0 flex-1">
-        <div className="space-y-4 p-2">
+        <div className="space-y-5 px-3 py-2">
           <section aria-label={t('portal.agents')}>
-            <p className="px-2 pb-1 text-xs font-medium text-muted-foreground">
+            <p className="px-2 pb-1.5 text-xs font-semibold tracking-wide text-muted-foreground">
               {t('portal.agents')}
             </p>
-            <nav className="space-y-0.5">
+            <nav className="space-y-1">
               {agents.map((agent) => (
                 <button
                   key={agent.key}
                   type="button"
                   data-testid="portal-agent-item"
                   className={cn(
-                    'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors',
+                    'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors',
                     agent.key === selectedAgentKey
-                      ? 'bg-accent text-accent-foreground'
-                      : 'hover:bg-accent/50',
+                      ? 'bg-primary/15 font-medium text-primary ring-1 ring-primary/25'
+                      : 'text-foreground/90 hover:bg-accent/60',
                   )}
                   onClick={() => onSelectAgent(agent.key)}
                 >
-                  <AgentAvatar agent={agent} size={22} />
+                  {agent.avatar && agent.show_avatar !== false && (
+                    <AgentAvatar agent={agent} size={22} />
+                  )}
                   <span className="min-w-0 flex-1 truncate">{agent.name}</span>
                 </button>
               ))}
@@ -126,10 +132,10 @@ export function SessionSidebar({
           </section>
 
           <section aria-label={t('portal.recentSessions')}>
-            <p className="px-2 pb-1 text-xs font-medium text-muted-foreground">
+            <p className="px-2 pb-1.5 text-xs font-semibold tracking-wide text-muted-foreground">
               {t('portal.recentSessions')}
             </p>
-            <nav className="space-y-0.5">
+            <nav className="space-y-1">
               {sessionsQuery.isLoading && (
                 <p className="px-2 py-1 text-sm text-muted-foreground">{t('common.loading')}</p>
               )}
@@ -137,10 +143,10 @@ export function SessionSidebar({
                 <div
                   key={session.id}
                   className={cn(
-                    'group flex items-center gap-1 rounded-md px-2 py-1.5 text-sm',
+                    'group flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm transition-colors',
                     session.id === activeSessionId
-                      ? 'bg-accent text-accent-foreground'
-                      : 'hover:bg-accent/50',
+                      ? 'bg-primary/15 font-medium text-primary ring-1 ring-primary/25'
+                      : 'hover:bg-accent/60',
                   )}
                 >
                   <MessagesSquare className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -231,9 +237,20 @@ export function SessionSidebar({
       </ScrollArea>
 
       <div className="flex h-12 shrink-0 items-center gap-2 border-t px-3">
-        <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+        <span className="min-w-0 flex-1 truncate text-xs font-medium text-muted-foreground">
           {user?.display_name ?? user?.username ?? ''}
         </span>
+        <Button
+          variant="ghost"
+          size="sm"
+          asChild
+          className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+        >
+          <Link to="/agents">
+            <LayoutDashboard className="mr-1 h-3.5 w-3.5" />
+            {t('chat.backToWorkbench')}
+          </Link>
+        </Button>
         <Button
           variant="ghost"
           size="icon"

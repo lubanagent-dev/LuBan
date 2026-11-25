@@ -65,10 +65,10 @@ export default function PromptsPage() {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/60 pb-4">
         <div>
           <h1 className="text-xl font-semibold">{t('prompts.title')}</h1>
-          <p className="text-sm text-muted-foreground">{t('prompts.desc')}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t('prompts.desc')}</p>
         </div>
         <Button onClick={() => setCreating(true)}>
           <FilePlus2 className="mr-1.5 h-4 w-4" />
@@ -87,7 +87,7 @@ export default function PromptsPage() {
       )}
 
       {promptsQuery.isSuccess && (
-        <div className="rounded-md border">
+        <div className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm">
           <Table>
             <TableHeader>
               <TableRow>

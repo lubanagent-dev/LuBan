@@ -184,11 +184,13 @@ export default function ChatPage() {
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
-      <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border/80 bg-card/85 px-6 backdrop-blur-md">
         {selectedAgent !== null ? (
           <>
-            <MessageCircle className="h-4 w-4 shrink-0 text-primary" />
-            <h1 className="shrink-0 text-sm font-medium">{selectedAgent.name}</h1>
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary ring-1 ring-primary/30">
+              <MessageCircle className="h-4 w-4" />
+            </div>
+            <h1 className="shrink-0 text-sm font-semibold">{selectedAgent.name}</h1>
             {selectedAgent.description !== '' && (
               <p className="hidden min-w-0 flex-1 truncate text-xs text-muted-foreground md:block">
                 {selectedAgent.description}
@@ -196,13 +198,13 @@ export default function ChatPage() {
             )}
           </>
         ) : (
-          <h1 className="shrink-0 text-sm font-medium">{t('chat.title')}</h1>
+          <h1 className="shrink-0 text-sm font-semibold">{t('chat.title')}</h1>
         )}
         <div className="ml-auto flex min-w-0 items-center justify-end gap-2">
           {!portalMode && (
             <>
               <Select
-                value={effectiveKey ?? undefined}
+                value={effectiveKey ?? ''}
                 onValueChange={(value) => {
                   if (value !== effectiveKey) {
                     // 切 Agent = 重置会话（防跨 Agent 历史污染）
@@ -281,19 +283,29 @@ export default function ChatPage() {
         {!portalMode && selectedAgent?.show_avatar !== false && (
           <aside
             aria-label={t('chat.avatarAria')}
-            className="hidden w-72 shrink-0 items-center justify-center border-r md:flex"
+            className="hidden w-72 shrink-0 flex-col items-center justify-center gap-4 border-r border-border/80 bg-card/40 p-6 md:flex"
           >
-            {selectedAgent ? (
-              <AgentAvatar agent={selectedAgent} size={224} speaking={streaming} />
-            ) : (
-              <MessageCircle className="h-24 w-24 shrink-0 text-primary" />
+            <div className="rounded-full bg-gradient-to-b from-primary/15 to-transparent p-3 ring-1 ring-border/70 shadow-lg">
+              {selectedAgent ? (
+                <AgentAvatar agent={selectedAgent} size={208} speaking={streaming} />
+              ) : (
+                <MessageCircle className="h-24 w-24 shrink-0 text-primary" />
+              )}
+            </div>
+            {selectedAgent && (
+              <div className="text-center">
+                <div className="text-sm font-semibold">{selectedAgent.name}</div>
+                <div className="mt-0.5 font-mono text-xs text-muted-foreground">
+                  {selectedAgent.key}
+                </div>
+              </div>
             )}
           </aside>
         )}
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
-            <div className="mx-auto max-w-3xl space-y-4">
+        <div className="flex min-w-0 flex-1 flex-col bg-muted/10">
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6">
+            <div className="mx-auto max-w-3xl space-y-5">
               {portalMode &&
                 (portalHistory.data ?? [])
                   .filter((message) => message.role === 'user' || message.role === 'assistant')
@@ -301,7 +313,7 @@ export default function ChatPage() {
                     message.role === 'user' ? (
                       <section key={message.id} className="space-y-2">
                         <div className="flex justify-end">
-                          <div className="max-w-[85%] whitespace-pre-wrap rounded-lg bg-primary px-4 py-2 text-sm leading-6 text-primary-foreground">
+                          <div className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-tr-sm bg-primary px-4 py-2.5 text-sm leading-6 text-primary-foreground shadow-sm">
                             {message.content}
                           </div>
                         </div>
@@ -309,7 +321,7 @@ export default function ChatPage() {
                     ) : (
                       <section key={message.id} className="space-y-2">
                         <div className="flex">
-                          <div className="max-w-[85%] rounded-lg bg-muted px-4 py-3">
+                          <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-border/70 bg-card px-4 py-3 shadow-sm">
                             <MarkdownMessage text={message.content} />
                           </div>
                         </div>
@@ -321,7 +333,7 @@ export default function ChatPage() {
                 (portalMode ? (portalHistory.data ?? []).length === 0 : true) &&
                 selectedAgent?.greeting && (
                 <div className="flex">
-                  <div className="rounded-lg bg-muted px-4 py-3 text-sm leading-6">
+                  <div className="rounded-2xl rounded-tl-sm border border-border/70 bg-card px-4 py-3 text-sm leading-6 shadow-sm">
                     {selectedAgent.greeting}
                   </div>
                 </div>
@@ -355,8 +367,8 @@ export default function ChatPage() {
             </div>
           </div>
 
-          <div className="shrink-0 border-t px-4 py-3">
-            <div className="mx-auto flex max-w-3xl items-end gap-2">
+          <div className="shrink-0 border-t border-border/80 bg-card/60 px-4 py-3.5 backdrop-blur-sm">
+            <div className="mx-auto flex max-w-3xl items-end gap-2.5">
               <Textarea
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
@@ -374,14 +386,24 @@ export default function ChatPage() {
                 rows={2}
                 disabled={inputLocked || effectiveKey === null}
                 aria-label={t('chat.inputAria')}
+                className="min-h-[52px] resize-none bg-background"
               />
               {streaming ? (
-                <Button variant="destructive" onClick={cancel} disabled={cancelRun.isPending}>
+                <Button
+                  variant="destructive"
+                  className="h-[52px] px-5"
+                  onClick={cancel}
+                  disabled={cancelRun.isPending}
+                >
                   <Square className="mr-1 h-4 w-4" />
                   {t('chat.stop')}
                 </Button>
               ) : (
-                <Button onClick={send} disabled={input.trim() === '' || inputLocked}>
+                <Button
+                  className="h-[52px] px-5"
+                  onClick={send}
+                  disabled={input.trim() === '' || inputLocked}
+                >
                   <Send className="mr-1 h-4 w-4" />
                   {t('chat.send')}
                 </Button>
@@ -396,14 +418,16 @@ export default function ChatPage() {
 
 function TurnBlock({ input, children }: { input: string; children: React.ReactNode }) {
   return (
-    <section className="space-y-2">
+    <section className="space-y-3">
       <div className="flex justify-end">
-        <div className="max-w-[85%] rounded-lg bg-primary px-4 py-2 text-sm leading-6 text-primary-foreground">
+        <div className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-tr-sm bg-primary px-4 py-2.5 text-sm leading-6 text-primary-foreground shadow-sm">
           {input}
         </div>
       </div>
       <div className="flex">
-        <div className="max-w-[85%] rounded-lg bg-muted px-4 py-3">{children}</div>
+        <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-border/70 bg-card px-4 py-3 shadow-sm">
+          {children}
+        </div>
       </div>
     </section>
   );

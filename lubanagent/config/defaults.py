@@ -41,6 +41,7 @@ SEED_MODEL_DEFINITIONS: list[dict] = [
         "params": {"script": ["你好，我是 LubanAgent。"]},
         "base_url": None,
         "api_key_env": None,
+        "api_key": None,
         "enabled": True,
     }
 ]

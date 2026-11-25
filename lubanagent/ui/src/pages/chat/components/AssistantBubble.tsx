@@ -27,7 +27,7 @@ function ToolStatusRow({ tool, status }: { tool: string; status: 'running' | 'do
     );
   return (
     <div
-      className="flex items-center gap-1.5 text-xs text-muted-foreground"
+      className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-muted/50 px-2.5 py-1 text-xs text-muted-foreground"
       data-testid="chat-tool-row"
     >
       {icon}
@@ -95,7 +95,7 @@ export function AssistantBubble({
 
       {approvalRequested && !approvalResolved && (
         <div
-          className="flex items-center gap-2 rounded-md border border-orange-500/50 bg-orange-500/10 px-3 py-2 text-xs"
+          className="flex items-center gap-2.5 rounded-xl border border-orange-500/40 bg-orange-500/10 px-3.5 py-2.5 text-xs"
           data-testid="chat-approval-card"
         >
           <ShieldQuestion className="h-4 w-4 shrink-0 text-orange-500" />

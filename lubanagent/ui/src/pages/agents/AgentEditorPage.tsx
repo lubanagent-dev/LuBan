@@ -86,9 +86,9 @@ export default function AgentEditorPage() {
   return (
     <div className="flex h-full min-h-0">
       <div className="min-w-0 flex-1 overflow-y-auto">
-        <div className="space-y-4 p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
+        <div className="space-y-5 p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-card/80 px-5 py-3.5 shadow-sm">
+            <div className="flex items-center gap-2.5">
               <h1 className="text-xl font-semibold tracking-tight">
                 {t('editor.titlePrefix')}
                 {key}
@@ -112,17 +112,19 @@ export default function AgentEditorPage() {
           </div>
 
           {savedMessage && (
-            <p className="rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-sm">
+            <p className="rounded-lg border border-primary/30 bg-primary/10 px-4 py-2.5 text-sm text-primary">
               {savedMessage}
             </p>
           )}
           {saveVersion.error && (
-            <p className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-2.5 text-sm text-destructive">
               {saveVersion.error.message}
             </p>
           )}
 
-          <AgentForm draft={draft} onChange={setDraft} />
+          <div className="rounded-xl border border-border/70 bg-card p-5 shadow-sm">
+            <AgentForm draft={draft} onChange={setDraft} />
+          </div>
         </div>
       </div>
 

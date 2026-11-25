@@ -10,6 +10,7 @@ from lubanagent.core import (
     AgentDefinition,
     BrainProfile,
     ModelCapability,
+    ModelDefinition,
     Run,
     Trace,
     TraceEvent,
@@ -82,7 +83,7 @@ class SessionMessageOut(BaseModel):
 
 
 class ModelDefinitionOut(BaseModel):
-    """模型定义对外视图：脱敏——只输出 api_key_env（变量名），不输出 base_url 等连接信息。"""
+    """模型定义对外视图：只输出 api_key_env 与 has_api_key，不输出 api_key 明文或 base_url。"""
 
     key: str
     provider: str
@@ -91,7 +92,22 @@ class ModelDefinitionOut(BaseModel):
     capability: ModelCapability = Field(default_factory=ModelCapability)
     params: dict[str, Any] = Field(default_factory=dict)
     api_key_env: str | None = None
+    has_api_key: bool = False
     enabled: bool = True
+
+
+class ModelUpsertRequest(ModelDefinition):
+    """PUT /v1/models 请求体：支持直接传入 api_key（落库持久化），或 clear_api_key 显式清空。"""
+
+    clear_api_key: bool = False
+
+
+class ModelEnabledPatch(BaseModel):
+    """PATCH /v1/models/{key}/enabled 请求体：快捷启用/停用模型。"""
+
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool
 
 
 class BrainMappingSetRequest(BaseModel):

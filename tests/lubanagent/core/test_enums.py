@@ -38,12 +38,13 @@ def test_brain_profile_rejects_invalid_identifiers(value: str) -> None:
         BrainProfile(value)
 
 
-def test_error_code_all_32() -> None:
+def test_error_code_all_33() -> None:
     expected = [
         "AGENT_NOT_FOUND",
         "AGENT_VERSION_NOT_FOUND",
         "AGENT_VERSION_UNRUNNABLE",
         "MODEL_NOT_FOUND",
+        "MODEL_IN_USE",
         "BRAIN_NOT_MAPPED",
         "BRAIN_PROFILE_NOT_FOUND",
         "BRAIN_PROFILE_CONFLICT",

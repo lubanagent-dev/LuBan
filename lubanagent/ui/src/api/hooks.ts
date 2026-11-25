@@ -17,8 +17,9 @@ import type { components } from './schema';
 
 export type AgentDefinition = components['schemas']['AgentDefinition'];
 export type AgentVersion = components['schemas']['AgentVersion'];
-export type ModelDefinition = components['schemas']['ModelDefinition'];
 export type ModelDefinitionOut = components['schemas']['ModelDefinitionOut'];
+export type ModelUpsertRequest = components['schemas']['ModelUpsertRequest'];
+export type ModelEnabledPatch = components['schemas']['ModelEnabledPatch'];
 export type BrainMappingOut = components['schemas']['BrainMappingOut'];
 export type BrainMappingSetRequest = components['schemas']['BrainMappingSetRequest'];
 export type BrainProfile = components['schemas']['BrainProfile'];
@@ -238,11 +239,58 @@ export function useModels(): UseQueryResult<ModelDefinitionOut[], ApiError> {
   return useQuery({ queryKey: ['models'], queryFn: () => unwrap(client.GET('/v1/models')) });
 }
 
-export function useUpsertModel(): UseMutationResult<ModelDefinitionOut, ApiError, ModelDefinition> {
+export function useUpsertModel(): UseMutationResult<
+  ModelDefinitionOut,
+  ApiError,
+  ModelUpsertRequest
+> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (definition) => unwrap(client.PUT('/v1/models', { body: definition })),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['models'] }),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['models'] }),
+        queryClient.invalidateQueries({ queryKey: ['brain-mappings'] }),
+      ]).then(() => undefined),
+  });
+}
+
+export function useSetModelEnabled(): UseMutationResult<
+  ModelDefinitionOut,
+  ApiError,
+  { key: string; enabled: boolean }
+> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ key, enabled }) =>
+      unwrap(
+        client.PATCH('/v1/models/{key}/enabled', {
+          params: { path: { key } },
+          body: { enabled },
+        }),
+      ),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['models'] }),
+        queryClient.invalidateQueries({ queryKey: ['brain-mappings'] }),
+      ]).then(() => undefined),
+  });
+}
+
+export function useDeleteModel(): UseMutationResult<
+  { [key: string]: boolean },
+  ApiError,
+  string
+> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (key) =>
+      unwrap(client.DELETE('/v1/models/{key}', { params: { path: { key } } })),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['models'] }),
+        queryClient.invalidateQueries({ queryKey: ['brain-mappings'] }),
+      ]).then(() => undefined),
   });
 }
 

@@ -34,11 +34,11 @@ export function MarkdownMessage({ text }: { text: string }) {
           ),
           code: ({ children, className }) =>
             className?.includes('language-') ? (
-              <code className="block overflow-x-auto rounded bg-background p-2 font-mono text-xs">
+              <code className="block overflow-x-auto rounded-lg border border-border/70 bg-muted/60 p-3 font-mono text-xs">
                 {children}
               </code>
             ) : (
-              <code className="rounded bg-background px-1 py-0.5 font-mono text-xs">
+              <code className="rounded-md border border-border/60 bg-muted/60 px-1.5 py-0.5 font-mono text-xs">
                 {children}
               </code>
             ),

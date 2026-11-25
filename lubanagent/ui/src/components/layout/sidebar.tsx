@@ -86,10 +86,10 @@ function readGroupOpen(): boolean {
 
 function navLinkClass({ isActive }: { isActive: boolean }) {
   return cn(
-    'flex items-center gap-2 rounded-md px-3 py-2 text-base font-medium transition-colors',
+    'group flex items-center gap-2.5 rounded-lg px-3 py-2 text-base font-medium transition-all duration-150',
     isActive
-      ? 'bg-accent text-accent-foreground'
-      : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground',
+      ? 'bg-primary/15 text-primary shadow-sm ring-1 ring-primary/25'
+      : 'text-muted-foreground hover:bg-accent/70 hover:text-foreground',
   );
 }
 
@@ -114,26 +114,30 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="flex w-52 shrink-0 flex-col border-r bg-card/50">
-      <div className="flex h-14 items-center gap-2 border-b px-4">
-        <Terminal className="h-5 w-5 text-primary" />
+    <aside className="flex w-60 shrink-0 flex-col border-r border-border/80 bg-card/90 backdrop-blur-sm">
+      <div className="flex h-14 items-center gap-2.5 border-b border-border/80 px-4">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 text-primary ring-1 ring-primary/30">
+          <Terminal className="h-4 w-4" />
+        </div>
         <span className="text-lg font-semibold tracking-tight">LubanAgent</span>
       </div>
-      <nav className="flex-1 space-y-1 overflow-y-auto p-2">
-        {can('run:execute') && (
-          <NavLink to={debugTarget} className={navLinkClass} end={false}>
-            <MessagesSquare className="h-4 w-4" />
-            {t('sidebar.debugConsole')}
+      <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+        <div className="mb-3 space-y-1 rounded-xl border border-border/60 bg-muted/30 p-1.5">
+          {can('run:execute') && (
+            <NavLink to={debugTarget} className={navLinkClass} end={false}>
+              <MessagesSquare className="h-4 w-4 shrink-0" />
+              {t('sidebar.debugConsole')}
+            </NavLink>
+          )}
+          {/* /chat 是并列路由（不在 AppShell 内）：点击即离开布局壳进全屏聊天 */}
+          <NavLink to="/chat" className={navLinkClass} end>
+            <MessageCircle className="h-4 w-4 shrink-0" />
+            {t('sidebar.userChat')}
           </NavLink>
-        )}
-        {/* /chat 是并列路由（不在 AppShell 内）：点击即离开布局壳进全屏聊天 */}
-        <NavLink to="/chat" className={navLinkClass} end>
-          <MessageCircle className="h-4 w-4" />
-          {t('sidebar.userChat')}
-        </NavLink>
+        </div>
         {navItems.map((item) => (
           <NavLink key={item.to} to={item.to} className={navLinkClass} end={item.to === '/agents'}>
-            <item.icon className="h-4 w-4" />
+            <item.icon className="h-4 w-4 shrink-0" />
             {t(item.labelKey)}
           </NavLink>
         ))}
@@ -143,11 +147,11 @@ export function Sidebar() {
           const hasActive = items.some((item) => location.pathname.startsWith(item.to));
           const open = groupOpen || hasActive;
           return (
-            <div key={group.labelKey} className="pt-2">
+            <div key={group.labelKey} className="pt-3">
               <button
                 type="button"
                 onClick={toggleGroup}
-                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent/50 hover:text-accent-foreground"
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent/70 hover:text-foreground"
                 data-testid="sidebar-admin-group"
               >
                 {open ? (
@@ -158,14 +162,14 @@ export function Sidebar() {
                 {t(group.labelKey)}
               </button>
               {open && (
-                <div className="ml-3 space-y-1 border-l pl-2">
+                <div className="ml-3.5 mt-1 space-y-1 border-l border-border/80 pl-2.5">
                   {items.map((item) => (
                     <NavLink
                       key={item.to}
                       to={item.to}
                       className={({ isActive }) => cn(navLinkClass({ isActive }), 'text-sm')}
                     >
-                      <item.icon className="h-4 w-4" />
+                      <item.icon className="h-4 w-4 shrink-0" />
                       {t(item.labelKey)}
                     </NavLink>
                   ))}

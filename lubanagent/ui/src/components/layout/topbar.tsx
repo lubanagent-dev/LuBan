@@ -33,22 +33,22 @@ export function Topbar() {
   }, [connected, queryClient]);
 
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between border-b px-4">
+    <header className="flex h-14 shrink-0 items-center justify-between border-b border-border/80 bg-card/80 px-6 backdrop-blur-md">
       <div className="flex items-center gap-3">
-        <span className="text-base font-medium text-muted-foreground">{t('topbar.title')}</span>
+        <span className="text-base font-semibold text-foreground">{t('topbar.title')}</span>
         <Badge variant={IS_MOCK ? 'secondary' : 'outline'} className="font-mono text-xs">
           {IS_MOCK ? 'mock' : 'live'}
         </Badge>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1.5 rounded-full border border-border/80 bg-muted/50 px-2.5 py-1 text-xs font-medium text-muted-foreground">
                 <span
                   className={
                     connected
-                      ? 'h-2 w-2 rounded-full bg-emerald-500'
+                      ? 'h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]'
                       : health.isLoading
                         ? 'h-2 w-2 rounded-full bg-yellow-500'
                         : 'h-2 w-2 rounded-full bg-red-500'

@@ -6,7 +6,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 
 import { server } from '@/mocks/node';
 import { brainMappings, brainProfiles, viewerUser } from '@/mocks/fixtures';
-import type { BrainProfileOut } from '@/api/hooks';
+import type { BrainProfileOut, ModelDefinitionOut } from '@/api/hooks';
 
 import ModelsPage from './ModelsPage';
 
@@ -39,7 +39,9 @@ describe('模型中心', () => {
     // vision 同时出现于能力徽章与大脑槽位标签
     expect(screen.getAllByText('vision').length).toBeGreaterThanOrEqual(2);
     // glm-4v 停用，其余启用
-    expect(screen.getByText('停用')).toBeInTheDocument();
+    const glmRow = screen.getAllByText('glm-4v')[0].closest('tr');
+    expect(glmRow).not.toBeNull();
+    expect(within(glmRow!).getByText('停用')).toBeInTheDocument();
     expect(screen.getAllByText('启用').length).toBeGreaterThanOrEqual(2);
     // 大脑映射卡四槽位
     for (const profile of ['fast', 'smart', 'cheap', 'vision']) {
@@ -359,5 +361,175 @@ describe('模型中心', () => {
       expect(screen.getByRole('button', { name })).toBeDisabled();
     }
     expect(screen.getByRole('combobox', { name: '大脑槽位 smart' })).toBeDisabled();
+  });
+
+  const baseCap = {
+    chat: true,
+    streaming: true,
+    tool_calling: false,
+    vision: false,
+    structured_output: false,
+    reasoning: false,
+    context_window: 64000,
+    max_output: 8192,
+  };
+
+  it('新建模型可填写 API Key 落库保存，编辑留空不清空原密钥且支持显式清空', async () => {
+    const bodies: Array<Record<string, unknown>> = [];
+    let list: ModelDefinitionOut[] = [
+      {
+        key: 'deepseek-chat',
+        provider: 'deepseek',
+        model_name: 'deepseek-chat',
+        factory: 'openai_compat',
+        api_key_env: 'DEEPSEEK_API_KEY',
+        has_api_key: true,
+        enabled: true,
+        capability: baseCap,
+        params: {},
+      },
+    ];
+    server.use(
+      http.get('*/v1/models', () => HttpResponse.json(list)),
+      http.put('*/v1/models', async ({ request }) => {
+        const body = (await request.json()) as Record<string, unknown>;
+        bodies.push(body);
+        const existing = list.find((m) => m.key === body.key);
+        const hasApiKey = body.clear_api_key
+          ? false
+          : Boolean(body.api_key) || Boolean(existing?.has_api_key);
+        const saved: ModelDefinitionOut = {
+          key: String(body.key),
+          provider: String(body.provider),
+          model_name: String(body.model_name),
+          factory: String(body.factory),
+          api_key_env: (body.api_key_env as string | null) ?? null,
+          has_api_key: hasApiKey,
+          enabled: Boolean(body.enabled),
+          capability: baseCap,
+          params: {},
+        };
+        list = existing
+          ? list.map((m) => (m.key === saved.key ? saved : m))
+          : [...list, saved];
+        return HttpResponse.json(saved);
+      }),
+    );
+    renderPage();
+    expect(await screen.findByText('已存库')).toBeInTheDocument();
+
+    const user = userEvent.setup();
+    // 新建模型填写 API Key
+    await user.click(screen.getByRole('button', { name: '新建模型' }));
+    const createDialog = screen.getByRole('dialog');
+    await user.type(within(createDialog).getByLabelText('key *'), 'ds-v3');
+    await user.type(within(createDialog).getByLabelText('provider *'), 'deepseek');
+    await user.type(within(createDialog).getByLabelText('model_name *'), 'deepseek-chat');
+    await user.type(
+      within(createDialog).getByLabelText('API Key（持久化到数据库）'),
+      'sk-saved-123',
+    );
+    await user.click(within(createDialog).getByRole('button', { name: '保存' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(bodies[0]).toMatchObject({
+      key: 'ds-v3',
+      factory: 'openai_compat',
+      api_key: 'sk-saved-123',
+      clear_api_key: false,
+    });
+
+    // 编辑已有密钥的模型：勾选清空后 clear_api_key=true
+    const dsRow = screen.getAllByText('deepseek-chat')[0].closest('tr');
+    expect(dsRow).not.toBeNull();
+    await user.click(within(dsRow!).getByRole('button', { name: '编辑' }));
+    const editDialog = screen.getByRole('dialog');
+    await user.click(within(editDialog).getByRole('switch', { name: '清空已保存的 API Key' }));
+    await user.click(within(editDialog).getByRole('button', { name: '保存' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(bodies[1]).toMatchObject({
+      key: 'deepseek-chat',
+      api_key: null,
+      clear_api_key: true,
+    });
+  });
+
+  it('支持一键停用/启用和删除模型（被槽位引用时提示 409 错误）', async () => {
+    let list = [
+      {
+        key: 'deepseek-chat',
+        provider: 'deepseek',
+        model_name: 'deepseek-chat',
+        factory: 'openai_compat',
+        api_key_env: null,
+        has_api_key: true,
+        enabled: true,
+        capability: { chat: true, streaming: true, context_window: 64000, max_output: 8192 },
+        params: {},
+      },
+      {
+        key: 'spare-model',
+        provider: 'qwen',
+        model_name: 'qwen-turbo',
+        factory: 'openai_compat',
+        api_key_env: null,
+        has_api_key: false,
+        enabled: true,
+        capability: { chat: true, streaming: true, context_window: 32000, max_output: 4096 },
+        params: {},
+      },
+    ];
+    server.use(
+      http.get('*/v1/models', () => HttpResponse.json(list)),
+      http.patch('*/v1/models/:key/enabled', async ({ params, request }) => {
+        const { enabled } = (await request.json()) as { enabled: boolean };
+        list = list.map((m) => (m.key === params.key ? { ...m, enabled } : m));
+        const updated = list.find((m) => m.key === params.key)!;
+        return HttpResponse.json(updated);
+      }),
+      http.delete('*/v1/models/:key', ({ params }) => {
+        if (params.key === 'deepseek-chat') {
+          return HttpResponse.json(
+            {
+              error: {
+                code: 'MODEL_IN_USE',
+                message: '模型 deepseek-chat 正被大脑槽位引用（dev/smart）',
+                details: {},
+                retryable: false,
+              },
+            },
+            { status: 409 },
+          );
+        }
+        list = list.filter((m) => m.key !== params.key);
+        return HttpResponse.json({ removed: true });
+      }),
+    );
+
+    renderPage();
+    await screen.findByText('spare-model');
+    const user = userEvent.setup();
+
+    // 停用再启用 spare-model
+    await user.click(screen.getByRole('button', { name: '停用模型 spare-model' }));
+    expect(await screen.findByRole('button', { name: '启用模型 spare-model' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '启用模型 spare-model' }));
+    expect(await screen.findByRole('button', { name: '停用模型 spare-model' })).toBeInTheDocument();
+
+    // 删除被引用模型显示 409 错误
+    await user.click(screen.getByRole('button', { name: '删除模型 deepseek-chat' }));
+    const blockedDialog = screen.getByRole('dialog');
+    await user.click(within(blockedDialog).getByRole('button', { name: '确认删除' }));
+    expect(
+      await within(blockedDialog).findByText('模型 deepseek-chat 正被大脑槽位引用（dev/smart）'),
+    ).toBeInTheDocument();
+    await user.click(within(blockedDialog).getByRole('button', { name: '取消' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+
+    // 删除未使用模型成功移除
+    await user.click(screen.getByRole('button', { name: '删除模型 spare-model' }));
+    const delDialog = screen.getByRole('dialog');
+    await user.click(within(delDialog).getByRole('button', { name: '确认删除' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(screen.queryByText('spare-model')).not.toBeInTheDocument();
   });
 });

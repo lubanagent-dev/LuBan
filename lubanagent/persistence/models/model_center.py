@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any
 
 import sqlalchemy as sa
-from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint, func
+from sqlalchemy import DateTime, ForeignKey, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from lubanagent.persistence.base import Base
@@ -22,6 +22,7 @@ class ModelRow(Base):
     params: Mapped[dict[str, Any]] = mapped_column(sa.JSON, default=dict)
     base_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
     api_key_env: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    api_key: Mapped[str | None] = mapped_column(Text, nullable=True)
     enabled: Mapped[bool] = mapped_column(default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(

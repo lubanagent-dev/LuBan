@@ -14,7 +14,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { useLogin, useLogout, useMe } from '@/api/access';
-import { authStore, clearAllCredentials, setSession } from '@/lib/auth';
+import { authStore, clearAllCredentials, setLoginModalOpen, setSession } from '@/lib/auth';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,10 +34,9 @@ export function useAuthState() {
 
 export function AuthStatus() {
   const t = useT();
-  const { sessionToken, rejected } = useAuthState();
+  const { sessionToken, rejected, loginModalOpen } = useAuthState();
   const meQuery = useMe();
   const me = meQuery.data ?? null;
-  const [open, setOpen] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const queryClient = useQueryClient();
@@ -50,7 +49,7 @@ export function AuthStatus() {
   useEffect(() => {
     if (rejected && !previousRejected.current) {
       queryClient.clear();
-      setOpen(true);
+      setLoginModalOpen(true);
     }
     previousRejected.current = rejected;
   }, [rejected, queryClient]);
@@ -70,7 +69,7 @@ export function AuthStatus() {
       // 兜底：epoch 重挂载是主恢复路径；若组件树未随纪元重建（如单测环境），
       // refetchQueries 让仍挂载的 observer 以新凭据重新取数。
       void queryClient.refetchQueries({ type: 'all' });
-      setOpen(false);
+      setLoginModalOpen(false);
     } catch {
       // 错误交由登录表单展示。
     }
@@ -83,7 +82,7 @@ export function AuthStatus() {
         queryClient.clear();
       },
     });
-    setOpen(false);
+    setLoginModalOpen(false);
   }
 
   const variant = rejected ? 'destructive' : sessionToken !== null ? 'default' : 'secondary';
@@ -95,13 +94,13 @@ export function AuthStatus() {
   const identityLabel = me?.auth_enabled === false ? t('auth.devMode') : me?.display_name;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={loginModalOpen} onOpenChange={setLoginModalOpen}>
       <Button
         variant="ghost"
         size="sm"
         className="gap-1.5"
         aria-label={t('auth.accountAndKey')}
-        onClick={() => setOpen(true)}
+        onClick={() => setLoginModalOpen(true)}
       >
         <KeyRound className="h-4 w-4" />
         <Badge variant={variant} className="font-mono text-xs" data-testid="auth-status">

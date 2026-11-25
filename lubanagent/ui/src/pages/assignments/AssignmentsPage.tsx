@@ -56,7 +56,7 @@ function resourceLabel(type: string, id: string, options: Record<string, Option[
 
 export default function AssignmentsPage() {
   return (
-    <div className="mx-auto max-w-5xl space-y-10 p-6">
+    <div className="space-y-6 p-6">
       <AssignmentSection />
     </div>
   );
@@ -140,11 +140,13 @@ function AssignmentSection() {
   };
 
   return (
-    <section data-testid="assignments-section">
-      <h2 className="mb-1 text-lg font-semibold">{t('assignments.title')}</h2>
-      <p className="mb-4 text-sm text-muted-foreground">{t('assignments.desc')}</p>
+    <section data-testid="assignments-section" className="space-y-5">
+      <div className="border-b border-border/60 pb-4">
+        <h1 className="text-xl font-semibold">{t('assignments.title')}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t('assignments.desc')}</p>
+      </div>
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2.5 rounded-xl border border-border/70 bg-card p-4 shadow-sm">
         <Select
           value={resourceType}
           onValueChange={(value) => {
@@ -245,6 +247,7 @@ function AssignmentSection() {
       </div>
       {error !== null && <p className="mb-2 text-sm text-destructive">{error}</p>}
 
+      <div className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm">
       <Table>
         <TableHeader>
           <TableRow>
@@ -259,7 +262,7 @@ function AssignmentSection() {
             <TableRow key={item.id} data-testid="assignment-row">
               <TableCell>
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="shrink-0 text-[10px]">
+                  <Badge variant="outline" className="shrink-0 text-xs">
                     {t(`assignments.type.${item.resource_type}`)}
                   </Badge>
                   <span>
@@ -269,7 +272,7 @@ function AssignmentSection() {
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="shrink-0 text-[10px]">
+                  <Badge variant="secondary" className="shrink-0 text-xs">
                     {item.grantee_type === 'user'
                       ? t('assignments.user')
                       : t('assignments.role')}
@@ -319,6 +322,7 @@ function AssignmentSection() {
           )}
         </TableBody>
       </Table>
+      </div>
       <PaginationBar
         page={page}
         pageSize={pageSize}

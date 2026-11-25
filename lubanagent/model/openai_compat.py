@@ -22,7 +22,7 @@ PROVIDERS: dict[str, dict[str, str]] = {
 
 
 def create_openai_compatible(definition: ModelDefinition) -> BaseChatModel:
-    """按 ModelDefinition 构造 ChatOpenAI; 密钥只来自 definition.api_key_env 指向的环境变量。"""
+    """按 ModelDefinition 构造 ChatOpenAI；优先使用数据库保存的 api_key，其次回退 api_key_env。"""
     base_url = definition.base_url or PROVIDERS.get(definition.provider, {}).get("base_url")
     try:
         validate_model_connection(
@@ -34,7 +34,10 @@ def create_openai_compatible(definition: ModelDefinition) -> BaseChatModel:
     except ValueError as exc:
         raise LubanError(ErrorCode.VALIDATION_ERROR, str(exc)) from None
     api_key_env = definition.api_key_env
-    if api_key_env is None:
+    stored_api_key = definition.api_key.strip() if definition.api_key else None
+    if stored_api_key:
+        api_key = stored_api_key
+    elif api_key_env is None:
         api_key = "EMPTY"  # ollama 等本地服务无密钥, OpenAI 客户端要求非空
     else:
         api_key = os.environ.get(api_key_env)

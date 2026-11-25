@@ -6,7 +6,7 @@
 import { Plus, X } from 'lucide-react';
 import { useState } from 'react';
 
-import { useUpsertModel, type ModelDefinition, type ModelDefinitionOut } from '@/api/hooks';
+import { useUpsertModel, type ModelDefinitionOut, type ModelUpsertRequest } from '@/api/hooks';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -71,7 +71,9 @@ export function ModelFormDialog({ open, onOpenChange, initial }: ModelFormDialog
   const [key, setKey] = useState(initial?.key ?? '');
   const [provider, setProvider] = useState(initial?.provider ?? '');
   const [modelName, setModelName] = useState(initial?.model_name ?? '');
-  const [factory, setFactory] = useState(initial?.factory ?? 'openai_compatible');
+  const [factory, setFactory] = useState(initial?.factory ?? 'openai_compat');
+  const [apiKey, setApiKey] = useState('');
+  const [clearApiKey, setClearApiKey] = useState(false);
   const [apiKeyEnv, setApiKeyEnv] = useState(initial?.api_key_env ?? '');
   const [baseUrl, setBaseUrl] = useState('');
   const [enabled, setEnabled] = useState(initial?.enabled ?? true);
@@ -111,12 +113,15 @@ export function ModelFormDialog({ open, onOpenChange, initial }: ModelFormDialog
         return;
       }
     }
-    const definition: ModelDefinition = {
+    const trimmedApiKey = apiKey.trim();
+    const definition: ModelUpsertRequest = {
       key: key.trim(),
       provider: provider.trim(),
       model_name: modelName.trim(),
-      factory: factory.trim() || 'openai_compatible',
+      factory: factory.trim() || 'openai_compat',
       api_key_env: apiKeyEnv.trim() || null,
+      api_key: clearApiKey ? null : trimmedApiKey || null,
+      clear_api_key: clearApiKey,
       base_url: baseUrl.trim() || null,
       enabled,
       capability: {
@@ -178,12 +183,46 @@ export function ModelFormDialog({ open, onOpenChange, initial }: ModelFormDialog
               <Input
                 id="model-factory"
                 value={factory}
-                placeholder="openai_compatible"
+                placeholder="openai_compat"
                 onChange={(event) => setFactory(event.target.value)}
               />
             </div>
+            <div className="col-span-2 space-y-1.5">
+              <Label htmlFor="model-api-key">{t('modelForm.apiKeyLabel')}</Label>
+              <Input
+                id="model-api-key"
+                type="password"
+                autoComplete="new-password"
+                disabled={clearApiKey}
+                value={apiKey}
+                placeholder={
+                  initial?.has_api_key
+                    ? t('modelForm.apiKeyPlaceholderSaved')
+                    : t('modelForm.apiKeyPlaceholderNew')
+                }
+                onChange={(event) => setApiKey(event.target.value)}
+              />
+              {initial?.has_api_key && (
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+                  <p className="text-xs text-muted-foreground">{t('modelForm.apiKeyHintSaved')}</p>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="model-clear-api-key"
+                      checked={clearApiKey}
+                      onCheckedChange={(checked) => {
+                        setClearApiKey(checked);
+                        if (checked) setApiKey('');
+                      }}
+                    />
+                    <Label htmlFor="model-clear-api-key" className="text-xs text-muted-foreground">
+                      {t('modelForm.apiKeyClear')}
+                    </Label>
+                  </div>
+                </div>
+              )}
+            </div>
             <div className="space-y-1.5">
-              <Label htmlFor="model-api-key-env">api_key_env</Label>
+              <Label htmlFor="model-api-key-env">{t('modelForm.apiKeyEnvLabel')}</Label>
               <Input
                 id="model-api-key-env"
                 value={apiKeyEnv}

@@ -3,9 +3,9 @@
  * 令牌进 sessionStorage（lib/portal.ts），成功后跳 /chat 使用会话侧栏与文件面板。
  */
 
-import { KeyRound, Loader2, MessageCircle, UserRound } from 'lucide-react';
+import { ArrowRight, KeyRound, Loader2, MessageCircle, UserRound } from 'lucide-react';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { portalLogin, portalRegister } from '@/api/hooks';
 import { ApiError } from '@/api/client';
@@ -46,10 +46,13 @@ export default function PortalLoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 text-foreground">
-      <div className="w-full max-w-sm space-y-6 rounded-xl border bg-card p-8 shadow-sm">
-        <div className="flex items-center gap-2">
-          <MessageCircle className="h-6 w-6 text-primary" />
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 text-foreground">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.14),transparent_65%)]" />
+      <div className="relative z-10 w-full max-w-md space-y-6 rounded-2xl border border-border/80 bg-card/95 p-8 shadow-xl backdrop-blur-md">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary ring-1 ring-primary/30">
+            <MessageCircle className="h-5 w-5" />
+          </div>
           <h1 className="text-xl font-semibold">{t('portal.title')}</h1>
           <Button
             variant="ghost"
@@ -61,14 +64,16 @@ export default function PortalLoginPage() {
           </Button>
         </div>
 
-        <div className="flex gap-1 rounded-lg bg-muted p-1 text-sm">
+        <div className="flex gap-1 rounded-xl border border-border/60 bg-muted/70 p-1 text-sm">
           {(['login', 'register'] as Mode[]).map((item) => (
             <button
               key={item}
               type="button"
               className={
-                'flex-1 rounded-md px-3 py-1.5 transition-colors ' +
-                (mode === item ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground')
+                'flex-1 rounded-lg px-3 py-2 transition-all ' +
+                (mode === item
+                  ? 'bg-card font-medium text-primary shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground')
               }
               onClick={() => {
                 setMode(item);
@@ -80,11 +85,11 @@ export default function PortalLoginPage() {
           ))}
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-3.5">
           <div className="relative">
-            <UserRound className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <UserRound className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
-              className="pl-8"
+              className="pl-9"
               value={username}
               onChange={(event) => setUsername(event.target.value)}
               placeholder={t('portal.username')}
@@ -101,9 +106,9 @@ export default function PortalLoginPage() {
             />
           )}
           <div className="relative">
-            <KeyRound className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <KeyRound className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
-              className="pl-8"
+              className="pl-9"
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
@@ -118,11 +123,24 @@ export default function PortalLoginPage() {
           {mode === 'register' && (
             <p className="text-xs text-muted-foreground">{t('portal.passwordHint')}</p>
           )}
-          {error !== null && <p className="text-sm text-destructive">{error}</p>}
+          {error !== null && (
+            <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
+            </p>
+          )}
           <Button className="w-full" onClick={() => void submit()} disabled={busy}>
             {busy && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
             {mode === 'login' ? t('portal.login') : t('portal.register')}
           </Button>
+          <div className="border-t border-border/60 pt-3 text-center">
+            <Link
+              to="/agents"
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-primary"
+            >
+              {t('chat.backToWorkbench')}
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
         </div>
       </div>
     </div>

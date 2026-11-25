@@ -382,3 +382,27 @@ def test_brain_profile_tables_compile_for_mysql():
         assert f"CREATE TABLE {name}" in str(
             CreateTable(Base.metadata.tables[name]).compile(dialect=dialect)
         )
+
+
+def test_migration_0019_model_api_key_roundtrip(tmp_path: Path) -> None:
+    url = f"sqlite+aiosqlite:///{tmp_path}/model-api-key.db"
+    _alembic_run(url, "upgrade", "e8f9a0b1c2d3")
+    with sqlite3.connect(_sync_path(url)) as conn:
+        conn.execute(
+            "INSERT INTO models (`key`, provider, model_name, factory, "
+            "capability, params, enabled) "
+            "VALUES ('ds', 'deepseek', 'deepseek-chat', 'openai_compat', '{}', '{}', 1)"
+        )
+    _alembic_run(url, "upgrade", "head")
+    with sqlite3.connect(_sync_path(url)) as conn:
+        cols = {row[1] for row in conn.execute("PRAGMA table_info(models)")}
+        assert "api_key" in cols
+        conn.execute("UPDATE models SET api_key = 'sk-persisted' WHERE `key` = 'ds'")
+        assert conn.execute("SELECT api_key FROM models WHERE `key` = 'ds'").fetchone() == (
+            "sk-persisted",
+        )
+    _alembic_run(url, "downgrade", "e8f9a0b1c2d3")
+    with sqlite3.connect(_sync_path(url)) as conn:
+        cols = {row[1] for row in conn.execute("PRAGMA table_info(models)")}
+        assert "api_key" not in cols
+    _alembic_run(url, "upgrade", "head")

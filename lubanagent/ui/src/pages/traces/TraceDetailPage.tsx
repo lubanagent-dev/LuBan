@@ -147,8 +147,8 @@ export default function TraceDetailPage() {
   const traceQuery = useTrace(runId);
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4 p-4">
-      <header className="flex items-center gap-3">
+    <div className="mx-auto max-w-5xl space-y-6 p-6">
+      <header className="flex flex-wrap items-center gap-3 border-b border-border/60 pb-4">
         <Button variant="ghost" size="sm" asChild>
           <Link to="/traces">
             <ArrowLeft className="mr-1 h-4 w-4" />

@@ -27,22 +27,22 @@ export function VersionSidebar({ agentKey, currentVersion, viewing, onView }: Ve
   const versions = Array.from({ length: currentVersion }, (_, i) => currentVersion - i);
 
   return (
-    <aside className="flex w-72 shrink-0 flex-col border-l bg-card/30">
-      <div className="border-b px-4 py-3">
+    <aside className="flex w-76 shrink-0 flex-col border-l border-border/70 bg-card/50">
+      <div className="border-b border-border/70 px-4 py-3.5">
         <h2 className="text-base font-semibold">{t('versions.title')}</h2>
         <p className="text-xs text-muted-foreground">{t('versions.subtitle')}</p>
       </div>
-      <div className="flex flex-wrap gap-1.5 border-b p-3">
+      <div className="flex flex-wrap gap-1.5 border-b border-border/70 p-3.5">
         {versions.map((version) => (
           <button
             key={version}
             type="button"
             onClick={() => onView(version === viewing ? null : version)}
             className={cn(
-              'inline-flex items-center gap-1 rounded-md border px-2 py-1 font-mono text-xs transition-colors',
+              'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 font-mono text-xs transition-all',
               viewing === version
-                ? 'border-primary bg-primary/10 text-primary'
-                : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground',
+                ? 'border-primary bg-primary/10 font-semibold text-primary shadow-sm'
+                : 'border-border/70 bg-background/60 text-muted-foreground hover:bg-accent/60 hover:text-foreground',
             )}
           >
             v{version}

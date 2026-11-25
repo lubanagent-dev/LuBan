@@ -65,10 +65,10 @@ export default function KnowledgePage() {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/60 pb-4">
         <div>
           <h1 className="text-xl font-semibold">{t('kb.title')}</h1>
-          <p className="text-sm text-muted-foreground">{t('kb.subtitle')}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t('kb.subtitle')}</p>
         </div>
         <Button onClick={() => setUploadOpen(true)}>
           <Upload className="mr-1.5 h-4 w-4" />
@@ -87,7 +87,7 @@ export default function KnowledgePage() {
       )}
 
       {sourcesQuery.isSuccess && (
-        <div className="rounded-md border">
+        <div className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm">
           <Table>
             <TableHeader>
               <TableRow>
@@ -478,7 +478,7 @@ function RetrievalTestPanel({ sources }: { sources: KnowledgeSourceOut[] }) {
   };
 
   return (
-    <div className="rounded-md border p-4">
+    <div className="rounded-xl border border-border/70 bg-card p-5 shadow-sm">
       <h2 className="mb-1 text-base font-semibold">{t('kb.testTitle')}</h2>
       <p className="mb-3 text-xs text-muted-foreground">
         {t('kb.testDesc')}

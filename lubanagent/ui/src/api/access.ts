@@ -80,7 +80,10 @@ async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> 
   return body as T;
 }
 
-/** 未登录返回 null 而不是错误：403/401 页面需要区分“未登录”和“权限不足”。 */
+/** 未登录返回 null 而不是错误：403/401 页面需要区分“未登录”和“权限不足”。
+ *  若当前仅携带门户令牌（permissions 仅有 portal:access），对工作台而言仍属未登录，
+ *  返回 null 以展示“请先登录工作台账号”而非误报 403。
+ */
 export async function fetchCurrentUser(): Promise<SessionUser | null> {
   const response = await authedFetch(`${API_BASE}/v1/auth/me`);
   if (response.status === 401) return null;
@@ -91,7 +94,16 @@ export async function fetchCurrentUser(): Promise<SessionUser | null> {
       response.status,
     );
   }
-  return body as SessionUser;
+  const user = body as SessionUser;
+  if (
+    typeof user?.subject === 'string' &&
+    user.subject.startsWith('portal_user:') &&
+    user.permissions.length === 1 &&
+    user.permissions[0] === 'portal:access'
+  ) {
+    return null;
+  }
+  return user;
 }
 
 export function useMe(): UseQueryResult<SessionUser | null, ApiError> {

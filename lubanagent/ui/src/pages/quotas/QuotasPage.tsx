@@ -76,10 +76,12 @@ export default function QuotasPage() {
   const quota = quotaQuery.data ?? null;
 
   return (
-    <section data-testid="quota-section">
-      <h2 className="mb-1 text-lg font-semibold">{t('quota.title')}</h2>
-      <p className="mb-3 text-sm text-muted-foreground">{t('quota.desc')}</p>
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+    <section data-testid="quota-section" className="space-y-6 p-6">
+      <div className="border-b border-border/60 pb-4">
+        <h2 className="text-xl font-semibold">{t('quota.title')}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{t('quota.desc')}</p>
+      </div>
+      <div className="flex flex-wrap items-center gap-2.5 rounded-xl border border-border/70 bg-card p-4 shadow-sm">
         <Select
           value={scope}
           onValueChange={(value) => {
@@ -130,7 +132,7 @@ export default function QuotasPage() {
       </div>
 
       {effectiveScopeId.trim() !== '' && (
-        <div className="space-y-3 rounded-lg border p-4">
+        <div className="space-y-4 rounded-xl border border-border/70 bg-card p-5 shadow-sm">
           <div className="flex flex-wrap items-center gap-2">
             <Input
               className="w-40"

@@ -554,3 +554,88 @@ async def test_brain_slot_all_runnable_versions_guard_delete(client, version, de
         f"/v1/agents/{key}/runs", json={"input": "same input", "version": version}
     )
     assert restored.status_code == 200 and '"type": "run_completed"' in restored.text
+
+
+async def test_model_api_key_persists_masked_and_supports_clear(db, client):
+    secret_key = "sk-deepseek-persisted-123456"
+    created = await client.put(
+        "/v1/models",
+        json={**_model_payload(), "api_key": secret_key},
+    )
+    assert created.status_code == 200
+    assert created.json()["has_api_key"] is True
+    assert "api_key" not in created.json()
+    assert secret_key not in created.text
+
+    # 列表可见 has_api_key=True 且无明文泄露
+    listing = await client.get("/v1/models")
+    assert listing.status_code == 200
+    assert secret_key not in listing.text
+    qwen = next(m for m in listing.json() if m["key"] == "qwen-plus")
+    assert qwen["has_api_key"] is True
+
+    # 编辑不传 api_key 保持已有密钥不变
+    edited = await client.put(
+        "/v1/models",
+        json={**_model_payload(), "model_name": "qwen-max"},
+    )
+    assert edited.status_code == 200
+    assert edited.json()["has_api_key"] is True
+    async with db.session() as session:
+        row = await session.scalar(select(ModelRow).where(ModelRow.key == "qwen-plus"))
+        assert row is not None and row.api_key == secret_key
+
+    # 显式 clear_api_key=True 清空密钥
+    cleared = await client.put(
+        "/v1/models",
+        json={**_model_payload(), "clear_api_key": True},
+    )
+    assert cleared.status_code == 200
+    assert cleared.json()["has_api_key"] is False
+    async with db.session() as session:
+        row = await session.scalar(select(ModelRow).where(ModelRow.key == "qwen-plus"))
+        assert row is not None and row.api_key is None
+
+
+async def test_model_toggle_enabled_and_delete_endpoints(client):
+    assert (await client.put("/v1/models", json=_model_payload())).status_code == 200
+
+    # 停用后依然出现在列表中，方便再次启用
+    disabled = await client.patch("/v1/models/qwen-plus/enabled", json={"enabled": False})
+    assert disabled.status_code == 200
+    assert disabled.json()["enabled"] is False
+    listing = (await client.get("/v1/models")).json()
+    qwen = next(m for m in listing if m["key"] == "qwen-plus")
+    assert qwen["enabled"] is False
+
+    # 重新启用
+    enabled = await client.patch("/v1/models/qwen-plus/enabled", json={"enabled": True})
+    assert enabled.status_code == 200
+    assert enabled.json()["enabled"] is True
+
+    # 不存在的模型启停返回 404
+    missing_toggle = await client.patch("/v1/models/ghost/enabled", json={"enabled": False})
+    assert missing_toggle.status_code == 404
+    assert missing_toggle.json()["error"]["code"] == "MODEL_NOT_FOUND"
+
+    # 被大脑槽位引用时删除返回 409 MODEL_IN_USE
+    assert (
+        await client.put("/v1/brain-mappings", json={"profile": "smart", "model_key": "qwen-plus"})
+    ).status_code == 200
+    in_use = await client.delete("/v1/models/qwen-plus")
+    assert in_use.status_code == 409
+    assert in_use.json()["error"]["code"] == "MODEL_IN_USE"
+
+    # 解除槽位引用后可删除
+    assert (
+        await client.put("/v1/brain-mappings", json={"profile": "smart", "model_key": "fake-chat"})
+    ).status_code == 200
+    removed = await client.delete("/v1/models/qwen-plus")
+    assert removed.status_code == 200
+    assert removed.json() == {"removed": True}
+    assert all(m["key"] != "qwen-plus" for m in (await client.get("/v1/models")).json())
+
+    # 再次删除返回 404
+    missing_del = await client.delete("/v1/models/qwen-plus")
+    assert missing_del.status_code == 404
+    assert missing_del.json()["error"]["code"] == "MODEL_NOT_FOUND"

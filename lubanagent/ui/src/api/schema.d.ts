@@ -550,6 +550,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/models/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Model */
+        delete: operations["delete_model_v1_models__key__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/models/{key}/enabled": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Set Model Enabled */
+        patch: operations["set_model_enabled_v1_models__key__enabled_patch"];
+        trace?: never;
+    };
     "/v1/portal/login": {
         parameters: {
             query?: never;
@@ -1954,14 +1988,12 @@ export interface components {
             vision: boolean;
         };
         /**
-         * ModelDefinition
-         * @description 模型注册记录; 切换模型 = 映射指向另一个 key, 不发版。
+         * ModelDefinitionOut
+         * @description 模型定义对外视图：只输出 api_key_env 与 has_api_key，不输出 api_key 明文或 base_url。
          */
-        ModelDefinition: {
+        ModelDefinitionOut: {
             /** Api Key Env */
             api_key_env?: string | null;
-            /** Base Url */
-            base_url?: string | null;
             capability?: components["schemas"]["ModelCapability"];
             /**
              * Enabled
@@ -1970,6 +2002,11 @@ export interface components {
             enabled: boolean;
             /** Factory */
             factory: string;
+            /**
+             * Has Api Key
+             * @default false
+             */
+            has_api_key: boolean;
             /** Key */
             key: string;
             /** Model Name */
@@ -1982,13 +2019,30 @@ export interface components {
             provider: string;
         };
         /**
-         * ModelDefinitionOut
-         * @description 模型定义对外视图：脱敏——只输出 api_key_env（变量名），不输出 base_url 等连接信息。
+         * ModelEnabledPatch
+         * @description PATCH /v1/models/{key}/enabled 请求体：快捷启用/停用模型。
          */
-        ModelDefinitionOut: {
+        ModelEnabledPatch: {
+            /** Enabled */
+            enabled: boolean;
+        };
+        /**
+         * ModelUpsertRequest
+         * @description PUT /v1/models 请求体：支持直接传入 api_key（落库持久化），或 clear_api_key 显式清空。
+         */
+        ModelUpsertRequest: {
+            /** Api Key */
+            api_key?: string | null;
             /** Api Key Env */
             api_key_env?: string | null;
+            /** Base Url */
+            base_url?: string | null;
             capability?: components["schemas"]["ModelCapability"];
+            /**
+             * Clear Api Key
+             * @default false
+             */
+            clear_api_key: boolean;
             /**
              * Enabled
              * @default true
@@ -3841,6 +3895,7 @@ export interface operations {
                 root_run_id?: string | null;
                 level?: string | null;
                 logger?: string | null;
+                exclude_logger?: string | null;
                 q?: string | null;
                 from_time?: string | null;
                 to_time?: string | null;
@@ -3902,7 +3957,75 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ModelDefinition"];
+                "application/json": components["schemas"]["ModelUpsertRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModelDefinitionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_model_v1_models__key__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: boolean;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_model_enabled_v1_models__key__enabled_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ModelEnabledPatch"];
             };
         };
         responses: {

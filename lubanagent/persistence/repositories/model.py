@@ -29,7 +29,9 @@ class ModelRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def upsert_model(self, definition: ModelDefinition) -> None:
+    async def upsert_model(
+        self, definition: ModelDefinition, *, clear_api_key: bool = False
+    ) -> ModelDefinition:
         validate_model_connection(
             factory=definition.factory,
             params=definition.params,
@@ -38,22 +40,27 @@ class ModelRepository:
         )
         row = await self._session.scalar(select(ModelRow).where(ModelRow.key == definition.key))
         if row is None:
-            self._session.add(
-                ModelRow(
-                    key=definition.key,
-                    provider=definition.provider,
-                    model_name=definition.model_name,
-                    factory=definition.factory,
-                    capability=definition.capability.model_dump(mode="json"),
-                    params=definition.params,
-                    base_url=definition.base_url,
-                    api_key_env=definition.api_key_env,
-                    enabled=definition.enabled,
-                )
+            row = ModelRow(
+                key=definition.key,
+                provider=definition.provider,
+                model_name=definition.model_name,
+                factory=definition.factory,
+                capability=definition.capability.model_dump(mode="json"),
+                params=definition.params,
+                base_url=definition.base_url,
+                api_key_env=definition.api_key_env,
+                api_key=None if clear_api_key else definition.api_key,
+                enabled=definition.enabled,
             )
+            self._session.add(row)
         else:
             # 列表不返回旧连接地址；编辑请求的空值表示沿用旧值，非清空。
             base_url = definition.base_url if definition.base_url is not None else row.base_url
+            api_key = (
+                None
+                if clear_api_key
+                else (definition.api_key if definition.api_key is not None else row.api_key)
+            )
             validate_model_connection(
                 factory=definition.factory,
                 params=definition.params,
@@ -67,7 +74,54 @@ class ModelRepository:
             row.params = definition.params
             row.base_url = base_url
             row.api_key_env = definition.api_key_env
+            row.api_key = api_key
             row.enabled = definition.enabled
+        await self._session.flush()
+        return self._to_domain(row)
+
+    async def set_model_enabled(self, key: str, *, enabled: bool) -> ModelDefinition:
+        row = await self._session.scalar(select(ModelRow).where(ModelRow.key == key))
+        if row is None:
+            raise LubanError(
+                ErrorCode.MODEL_NOT_FOUND,
+                f"模型不存在: {key}",
+                details={"model_key": key},
+            )
+        row.enabled = enabled
+        await self._session.flush()
+        return self._to_domain(row)
+
+    async def delete_model(self, key: str) -> None:
+        row = await self._session.scalar(select(ModelRow).where(ModelRow.key == key))
+        if row is None:
+            raise LubanError(
+                ErrorCode.MODEL_NOT_FOUND,
+                f"模型不存在: {key}",
+                details={"model_key": key},
+            )
+        mappings = (
+            await self._session.scalars(
+                select(BrainMappingRow)
+                .join(BrainProfileRow, BrainProfileRow.key == BrainMappingRow.profile)
+                .where(
+                    BrainMappingRow.model_key == key,
+                    BrainProfileRow.deleted.is_(False),
+                )
+                .order_by(BrainMappingRow.env, BrainMappingRow.profile)
+            )
+        ).all()
+        if mappings:
+            refs = [{"env": m.env, "profile": m.profile} for m in mappings]
+            slots = ", ".join(f"{m.env}/{m.profile}" for m in mappings)
+            raise LubanError(
+                ErrorCode.MODEL_IN_USE,
+                f"模型 {key} 正被大脑槽位引用（{slots}），请先切换槽位映射后再删除",
+                details={"model_key": key, "mappings": refs},
+            )
+        await self._session.execute(
+            delete(BrainMappingRow).where(BrainMappingRow.model_key == key)
+        )
+        await self._session.delete(row)
         await self._session.flush()
 
     async def get_model(self, key: str) -> ModelDefinition | None:
@@ -117,6 +171,7 @@ class ModelRepository:
             .where(
                 BrainProfileAliasRow.key == profile.value,
                 BrainProfileRow.deleted.is_(False),
+                ModelRow.enabled.is_(True),
                 BrainMappingRow.env == env,
             )
         )
@@ -429,5 +484,6 @@ class ModelRepository:
             params=row.params,
             base_url=row.base_url,
             api_key_env=row.api_key_env,
+            api_key=row.api_key,
             enabled=row.enabled,
         )

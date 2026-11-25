@@ -257,10 +257,10 @@ export default function SecurityPage() {
   }
 
   return (
-    <div className="space-y-4 p-4">
-      <header>
+    <div className="space-y-6 p-6">
+      <header className="border-b border-border/60 pb-4">
         <h1 className="text-xl font-semibold">{t('security.title')}</h1>
-        <p className="text-sm text-muted-foreground">{t('security.desc')}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{t('security.desc')}</p>
       </header>
 
       {mutationError && (
@@ -302,7 +302,7 @@ export default function SecurityPage() {
             </Button>
           </div>
 
-          <div className="rounded-md border">
+          <div className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -422,7 +422,7 @@ export default function SecurityPage() {
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-sm font-medium">{role.name}</span>
                       {role.protected && (
-                        <Badge variant="outline" className="text-[10px]">
+                        <Badge variant="outline" className="text-xs">
                           {t('security.protectedTag')}
                         </Badge>
                       )}

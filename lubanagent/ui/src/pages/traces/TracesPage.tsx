@@ -74,8 +74,8 @@ export default function TracesPage() {
   });
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4 p-4">
-      <header className="flex flex-wrap items-center gap-3">
+    <div className="space-y-6 p-6">
+      <header className="flex flex-wrap items-center gap-3 border-b border-border/60 pb-4">
         <h1 className="text-xl font-semibold">{t('traces.title')}</h1>
         <Select value={agentFilter} onValueChange={setAgentFilter}>
           <SelectTrigger className="w-56" aria-label={t('traces.filterAria')}>
@@ -102,7 +102,7 @@ export default function TracesPage() {
         </div>
       )}
 
-      <div className="rounded-md border">
+      <div className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>

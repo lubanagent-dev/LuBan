@@ -128,7 +128,7 @@ function Topology({ detail }: { detail: GraphDetailOut }) {
   };
 
   return (
-    <div className="overflow-auto">
+    <div className="overflow-auto rounded-lg border border-border/60 bg-muted/20 p-2">
       <div className="relative" style={{ width, height }}>
         <svg className="absolute inset-0" width={width} height={height}>
           {detail.edges.map((edge) => {
@@ -238,13 +238,13 @@ export default function GraphsPage() {
   const detailQuery = useGraphDetail(selected);
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold">{t('graphs.title')}</h1>
-        <p className="text-sm text-muted-foreground">{t('graphs.subtitle')}</p>
+    <div className="space-y-6 p-6">
+      <div className="border-b border-border/60 pb-4">
+        <h1 className="text-xl font-semibold">{t('graphs.title')}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t('graphs.subtitle')}</p>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
+      <div className="grid gap-5 lg:grid-cols-[280px_1fr]">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">{t('graphs.list')}</CardTitle>
@@ -265,8 +265,10 @@ export default function GraphsPage() {
                 type="button"
                 onClick={() => setSelected(graph.name)}
                 className={cn(
-                  'w-full rounded-md border p-2 text-left text-sm hover:bg-accent',
-                  selected === graph.name && 'border-primary bg-accent',
+                  'w-full rounded-lg border p-2.5 text-left text-sm transition-all hover:bg-accent/60',
+                  selected === graph.name
+                    ? 'border-primary bg-primary/10 text-primary shadow-sm'
+                    : 'border-border/70 bg-background/50',
                 )}
               >
                 <div className="font-medium">{graph.name}</div>

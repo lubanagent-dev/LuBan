@@ -162,9 +162,9 @@ export default function ToolsPage() {
 
   return (
     <div className="space-y-6 p-6">
-      <div>
+      <div className="border-b border-border/60 pb-4">
         <h1 className="text-xl font-semibold">{t('toolsPage.title')}</h1>
-        <p className="text-sm text-muted-foreground">{t('toolsPage.desc')}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{t('toolsPage.desc')}</p>
       </div>
 
       {toolsQuery.isLoading && (
@@ -178,7 +178,7 @@ export default function ToolsPage() {
       )}
 
       {toolsQuery.isSuccess && (
-        <div className="rounded-md border">
+        <div className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm">
           <Table>
             <TableHeader>
               <TableRow>

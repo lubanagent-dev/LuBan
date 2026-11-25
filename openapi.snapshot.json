@@ -2108,72 +2108,8 @@
         "title": "ModelCapability",
         "type": "object"
       },
-      "ModelDefinition": {
-        "description": "模型注册记录; 切换模型 = 映射指向另一个 key, 不发版。",
-        "properties": {
-          "api_key_env": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Api Key Env"
-          },
-          "base_url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Base Url"
-          },
-          "capability": {
-            "$ref": "#/components/schemas/ModelCapability"
-          },
-          "enabled": {
-            "default": true,
-            "title": "Enabled",
-            "type": "boolean"
-          },
-          "factory": {
-            "title": "Factory",
-            "type": "string"
-          },
-          "key": {
-            "title": "Key",
-            "type": "string"
-          },
-          "model_name": {
-            "title": "Model Name",
-            "type": "string"
-          },
-          "params": {
-            "additionalProperties": true,
-            "title": "Params",
-            "type": "object"
-          },
-          "provider": {
-            "title": "Provider",
-            "type": "string"
-          }
-        },
-        "required": [
-          "key",
-          "provider",
-          "model_name",
-          "factory"
-        ],
-        "title": "ModelDefinition",
-        "type": "object"
-      },
       "ModelDefinitionOut": {
-        "description": "模型定义对外视图：脱敏——只输出 api_key_env（变量名），不输出 base_url 等连接信息。",
+        "description": "模型定义对外视图：只输出 api_key_env 与 has_api_key，不输出 api_key 明文或 base_url。",
         "properties": {
           "api_key_env": {
             "anyOf": [
@@ -2197,6 +2133,11 @@
           "factory": {
             "title": "Factory",
             "type": "string"
+          },
+          "has_api_key": {
+            "default": false,
+            "title": "Has Api Key",
+            "type": "boolean"
           },
           "key": {
             "title": "Key",
@@ -2223,6 +2164,101 @@
           "factory"
         ],
         "title": "ModelDefinitionOut",
+        "type": "object"
+      },
+      "ModelEnabledPatch": {
+        "additionalProperties": false,
+        "description": "PATCH /v1/models/{key}/enabled 请求体：快捷启用/停用模型。",
+        "properties": {
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "enabled"
+        ],
+        "title": "ModelEnabledPatch",
+        "type": "object"
+      },
+      "ModelUpsertRequest": {
+        "description": "PUT /v1/models 请求体：支持直接传入 api_key（落库持久化），或 clear_api_key 显式清空。",
+        "properties": {
+          "api_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Api Key"
+          },
+          "api_key_env": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Api Key Env"
+          },
+          "base_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Url"
+          },
+          "capability": {
+            "$ref": "#/components/schemas/ModelCapability"
+          },
+          "clear_api_key": {
+            "default": false,
+            "title": "Clear Api Key",
+            "type": "boolean"
+          },
+          "enabled": {
+            "default": true,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "factory": {
+            "title": "Factory",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "model_name": {
+            "title": "Model Name",
+            "type": "string"
+          },
+          "params": {
+            "additionalProperties": true,
+            "title": "Params",
+            "type": "object"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "provider",
+          "model_name",
+          "factory"
+        ],
+        "title": "ModelUpsertRequest",
         "type": "object"
       },
       "PermissionPublic": {
@@ -6029,7 +6065,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ModelDefinition"
+                "$ref": "#/components/schemas/ModelUpsertRequest"
               }
             }
           },
@@ -6058,6 +6094,104 @@
           }
         },
         "summary": "Upsert Model",
+        "tags": [
+          "models"
+        ]
+      }
+    },
+    "/v1/models/{key}": {
+      "delete": {
+        "operationId": "delete_model_v1_models__key__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "boolean"
+                  },
+                  "title": "Response Delete Model V1 Models  Key  Delete",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Model",
+        "tags": [
+          "models"
+        ]
+      }
+    },
+    "/v1/models/{key}/enabled": {
+      "patch": {
+        "operationId": "set_model_enabled_v1_models__key__enabled_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelEnabledPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelDefinitionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Model Enabled",
         "tags": [
           "models"
         ]
