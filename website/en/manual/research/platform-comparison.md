@@ -31,23 +31,11 @@ const projects = [
   { id: 'dsh', name: 'DSH' },
   { id: 'openhands', name: 'OpenHands' },
   { id: 'pi', name: 'pi' },
-  { id: 'openai-agents-sdk', name: 'OA SDK' },
   { id: 'agentscope', name: 'AgentScope' },
-  { id: 'mastra', name: 'Mastra' },
   { id: 'deer-flow', name: 'deer-flow' },
   { id: 'agent-teams', name: 'AgentTeams' },
-  { id: 'multiuserclaw', name: 'MultiUserClaw' },
-  { id: 'yc-qm', name: 'YC-QM' },
-  { id: 'multica', name: 'Multica' },
   { id: 'hermes', name: 'Hermes' },
-  { id: 'workbuddy', name: 'WorkBuddy' },
-  { id: 'qwenpaw', name: 'QwenPaw' },
   { id: 'litellm', name: 'LiteLLM' },
-  { id: 'weknora', name: 'Weknora' },
-  { id: 'ragflow', name: 'RAGFlow' },
-  { id: 'e2b-opensandbox', name: 'E2B/OSB' },
-  { id: 'k8s-session-sandbox', name: 'K8s' },
-  { id: 'bwrap-cubesandbox', name: 'Bwrap' },
 ];
 const st = { '●': 'full', '◐': 'part', '○': 'none' };
 const descs = {
@@ -71,22 +59,22 @@ const descs = {
 
 // Each status array is aligned with `projects`; coarse verdicts, see the detail table.
 const requirements = [
-  { name: 'Web chat portal', s: ['●','●','●','●','●','●','○','○','◐','○','○','◐','○','◐','◐','●','◐','◐','◐','◐','●','○','◐','◐','○','○','○'] },
-  { name: 'Registration / accounts', s: ['●','●','●','●','●','●','○','○','◐','○','○','○','○','○','◐','●','◐','◐','◐','◐','●','○','◐','●','○','○','○'] },
-  { name: 'Per-user session isolation', s: ['●','●','●','●','●','●','●','●','●','○','◐','●','◐','◐','●','●','◐','●','○','●','◐','○','◐','◐','●','●','●'] },
-  { name: 'Session history persistence', s: ['●','●','●','●','●','●','●','●','●','◐','●','●','●','◐','●','●','◐','●','●','●','●','○','○','◐','◐','○','○'] },
-  { name: 'Knowledge bases with grants', s: ['●','●','●','●','◐','●','○','○','◐','○','○','◐','◐','○','◐','◐','◐','◐','◐','◐','◐','○','●','●','○','○','○'] },
-  { name: 'Skills with visibility scopes', s: ['●','●','◐','●','◐','◐','◐','◐','◐','◐','◐','◐','◐','○','◐','◐','◐','◐','●','◐','●','○','○','○','○','○','○'] },
-  { name: 'MCP central config', s: ['●','●','◐','◐','●','◐','●','●','●','◐','◐','●','●','○','◐','◐','◐','●','◐','◐','◐','○','○','○','○','○','○'] },
-  { name: 'Tool sandboxing', s: ['●','◐','●','●','◐','◐','●','●','●','◐','◐','●','◐','◐','●','◐','◐','●','○','◐','◐','○','○','○','●','●','●'] },
-  { name: 'Per-user/session containers', s: ['●','◐','◐','◐','○','○','●','◐','●','○','○','◐','○','◐','●','●','◐','●','○','○','○','○','○','○','●','●','◐'] },
-  { name: 'Quotas and model management', s: ['●','◐','●','●','◐','◐','○','○','◐','○','○','○','○','○','◐','◐','◐','◐','◐','◐','◐','●','○','◐','◐','○','○'] },
-  { name: 'Cost attribution and audit', s: ['●','◐','◐','◐','◐','◐','◐','○','◐','◐','●','◐','◐','◐','◐','◐','◐','◐','◐','◐','◐','●','○','○','◐','◐','○'] },
-  { name: 'Human approval', s: ['●','○','◐','○','○','○','●','○','◐','○','●','○','○','◐','◐','○','○','○','○','○','○','○','○','○','○','○','○'] },
-  { name: 'File upload / download', s: ['●','●','●','●','●','●','◐','◐','●','◐','◐','◐','◐','◐','◐','●','◐','◐','◐','●','●','○','●','●','●','○','○'] },
-  { name: 'Multi-agent collaboration', s: ['●','○','●','●','○','◐','◐','◐','◐','◐','●','●','●','●','●','◐','◐','●','◐','◐','◐','○','○','○','○','○','○'] },
-  { name: 'Org structure / multi-tenancy', s: ['○','●','●','●','◐','●','○','○','◐','○','○','○','○','○','◐','●','●','◐','○','○','◐','●','◐','◐','◐','◐','○'] },
-  { name: 'Desktop / local clients', s: ['○','○','○','○','○','○','◐','○','◐','○','○','○','○','○','○','○','○','○','○','●','●','○','○','○','○','○','○'] },
+  { name: 'Web chat portal', s: ['●','●','●','●','●','●','○','○','◐','○','◐','◐','◐','◐','○'] },
+  { name: 'Registration / accounts', s: ['●','●','●','●','●','●','○','○','◐','○','○','○','◐','◐','○'] },
+  { name: 'Per-user session isolation', s: ['●','●','●','●','●','●','●','●','●','○','●','◐','●','○','○'] },
+  { name: 'Session history persistence', s: ['●','●','●','●','●','●','●','●','●','◐','●','◐','●','●','○'] },
+  { name: 'Knowledge bases with grants', s: ['●','●','●','●','◐','●','○','○','◐','○','◐','○','◐','◐','○'] },
+  { name: 'Skills with visibility scopes', s: ['●','●','◐','●','◐','◐','◐','◐','◐','◐','◐','○','◐','●','○'] },
+  { name: 'MCP central config', s: ['●','●','◐','◐','●','◐','●','●','●','◐','●','○','◐','◐','○'] },
+  { name: 'Tool sandboxing', s: ['●','◐','●','●','◐','◐','●','●','●','◐','●','◐','●','○','○'] },
+  { name: 'Per-user/session containers', s: ['●','◐','◐','◐','○','○','●','◐','●','○','◐','◐','●','○','○'] },
+  { name: 'Quotas and model management', s: ['●','◐','●','●','◐','◐','○','○','◐','○','○','○','◐','◐','●'] },
+  { name: 'Cost attribution and audit', s: ['●','◐','◐','◐','◐','◐','◐','○','◐','◐','◐','◐','◐','◐','●'] },
+  { name: 'Human approval', s: ['●','○','◐','○','○','○','●','○','◐','○','○','◐','◐','○','○'] },
+  { name: 'File upload / download', s: ['●','●','●','●','●','●','◐','◐','●','◐','◐','◐','◐','◐','○'] },
+  { name: 'Multi-agent collaboration', s: ['●','○','●','●','○','◐','◐','◐','◐','◐','●','●','●','◐','○'] },
+  { name: 'Org structure / multi-tenancy', s: ['○','●','●','●','◐','●','○','○','◐','○','○','○','◐','○','●'] },
+  { name: 'Desktop / local clients', s: ['○','○','○','○','○','○','◐','○','◐','○','○','○','○','○','○'] },
 ];
 </script>
 
@@ -155,6 +143,31 @@ const requirements = [
   border: 1px solid var(--vp-c-divider);
   border-radius: 4px;
 }
+/* Big matrix: the table scrolls vertically on its own, with the project-name header pinned */
+.platform-research .matrix-wrap {
+  max-height: 70vh;
+  overflow: auto;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+}
+.platform-research .vp-doc table.matrix {
+  display: table;
+  width: max-content;
+  min-width: 100%;
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.platform-research .matrix thead th {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: var(--vp-c-bg-soft);
+  box-shadow: inset 0 -1px 0 var(--vp-c-divider);
+}
+.platform-research .matrix thead th:first-child {
+  z-index: 5;
+}
 /* In-page enlargement: lightbox overlay, close on any click or Escape */
 .platform-research img.zoomable {
   cursor: zoom-in;
@@ -182,15 +195,15 @@ const requirements = [
 
 # Platform benchmark research
 
-This page benchmarks "user-facing platform" requirements gathered from Linux.do topic 2854294 (the original post plus 146 replies) against 25+ open-source projects, including the technical principles behind each capability, together with 27 **isomorphic architecture diagrams** (one shared six-layer structure, one shared status legend — flip through them side by side to see who has which slot).
+This page benchmarks "user-facing platform" requirements gathered from Linux.do topic 2854294 (the original post plus 146 replies) against 15 same-positioning projects, including the technical principles behind each capability, together with 15 **isomorphic architecture diagrams** (one shared six-layer structure, one shared status legend — flip through them side by side to see who has which slot).
 
 Legend: **● native support　◐ partial / needs a fork　○ missing　★ recently added**.
 
 The full research process, gap analysis and transformation plan live in the repository: `docs/design-docs/LuBanAgent-platform-research-and-transformation.md`.
 
-## Requirements × 28 projects matrix {#comparison-table}
+## Requirements × 15 projects matrix {#comparison-table}
 
-The big table: **each column is a project** (LuBanAgent first for easy comparison), each row is a requirement, and the **last row embeds every project's isomorphic architecture diagram** (click to enlarge). It is wide and **scrolls horizontally** with the leftmost requirement column frozen. Cells are coarse verdicts: **● native　◐ partial / needs a fork　○ missing**; requirement descriptions appear under each row label.
+The big table: **each column is a project** (LuBanAgent first for easy comparison), each row is a requirement, and the **last row embeds every project's isomorphic architecture diagram** (click to enlarge). The table **scrolls both ways**, and **both the project-name header and the leftmost requirement column stay frozen**, so you always know which project you are looking at. Cells are coarse verdicts: **● native　◐ partial / needs a fork　○ missing**; requirement descriptions appear under each row label.
 
 <div class="matrix-wrap">
 <table class="matrix">
